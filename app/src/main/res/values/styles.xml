@@ -1,0 +1,42 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="AppTheme.Base">
+    </style>
+
+    <style name="AppTheme.Base" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/color_2</item>
+        <item name="colorPrimaryDark">@color/color_principal</item>
+        <item name="colorAccent">@color/color_2</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+
+
+    <style name="texto_intro">
+        <item name="android:textColor">@color/color_blanco</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:layout_margin">19dp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="texto_ruta">
+        <!--<item name="android:textColor">@color/color_principal</item>-->
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_margin">2.3dp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="editText">
+        <item name="android:textColor">@color/color_negro</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_margin">4dp</item>
+        <item name="android:background">@drawable/rounded_corner</item>
+    </style>
+
+    <style name="WeListView" parent="@android:style/Widget.ListView">
+        <item name="android:listSelector">@drawable/button_transparent</item>
+        <item name="android:divider">@android:color/transparent</item>
+    </style>
+
+</resources>

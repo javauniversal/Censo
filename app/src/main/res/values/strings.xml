@@ -1,0 +1,74 @@
+<resources>
+    <string name="app_name">Censo</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="drawer_open">Abrir</string>
+    <string name="drawer_close">Cerrar</string>
+
+    <string name="texto_intro1">La información obtenida puede presentarse por unidades administrativas u otras unidades de estratificación cualquiera sea su tamaño, pudiendo obtener datos para áreas pequeñas.</string>
+    <string name="texto_intro2">Puedes usar Mapas para buscar tu ubicación, usar la navegación paso a paso y ver la información del tráfico en tiempo real.</string>
+    <string name="texto_intro3">Es la principal fuente de datos demográficos por la gran cantidad de información que maneja: da una fotografía de la población, describe estadísticamente las poblaciones humanas</string>
+
+    <!-- Exit App Dialog -->
+    <string name="title">Cerrar Aplicación</string>
+    <string name="content">¿Esta seguro que desea cerrar la aplicación?</string>
+    <string name="agree">Aceptar</string>
+    <string name="disagree">Cancelar</string>
+
+    <!-- Listado del menu -->
+    <string name="drawer_inicio">Inicio</string>
+    <string name="drawer_censo">Censo</string>
+    <string name="drawer_censo_data">Datos censados</string>
+    <string name="drawer_ruta">Ruta</string>
+    <string name="drawer_configuracion">Configuración</string>
+    <string name="drawer_salir">Salir</string>
+
+    <string name="validate_company">El código de la compañía es requerido</string>
+    <string name="validate_user">El usuario es requerido</string>
+    <string name="validate_password">La contraseña es requerida</string>
+
+    <string name="nombere_usuario">Jhon F. Cardona</string>
+
+    <string name="texto_company">Codigo Compañia</string>
+    <string name="texto_usuario">Usuario</string>
+    <string name="texto_contrasena">Contraseña</string>
+    <string name="texto_ingresar">Iniciar Sesión</string>
+
+    <string name="texto_omitir">Omitir</string>
+    <string name="texto_fin">Fin</string>
+
+    <!-- QUERYS SQLITE -->
+    <string name="query_ruta">CREATE TABLE Ruta (id integer int, nombreRuta TEXT, fechainicial DATETIME, fechafinal DATETIME, estadoruta int)</string>
+    <string name="query_censo">CREATE TABLE Censo (id integer primary key AUTOINCREMENT, idRuta INT,  tiempocenso DATETIME, latitud REAL, longitud REAL, censodata TEXT)</string>
+    <string name="query_detalleRuta">CREATE TABLE DetalleRuta (id integer primary key AUTOINCREMENT, idRuta INT, tiemposeguimiento DATETIME, latitud REAL, longitud REAL)</string>
+    <string name="query_mapPoint">CREATE TABLE MapPoint (id integer primary key AUTOINCREMENT, orden INT, idRuta INT, latitud REAL, longitud REAL)</string>
+    <string name="query_configuracionbase">CREATE TABLE ConfiguracionApp (id integer primary key AUTOINCREMENT, urlBase TEXT, intervalBase INT)</string>
+    <string name="title_activity_act_destall_maps">Detalle en el mapa</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_act_estadisticas">"Estadísticas "</string>
+    <string name="title_activity_act_datos_censo_f">Datos Censados</string>
+    <string name="title_activity_act_detalle_censo">Detalle del Censo</string>
+    <string name="title_activity_act_splash">Intro</string>
+
+    <!--<string name="url_authentication">http://172.20.4.218:2080/dito/services/zenso/authentication.svc/</string>-->
+    <!--<string name="url_authentication">http://192.168.1.52:2080/dito/services/zenso/Authentication.svc/</string>-->
+    <!--<string name="url_authentication">http://172.20.32.75:2080/dito/services/zenso/Authentication.svc/</string>-->
+
+    <!--<string name="url_authentication">http://201.232.32.152:2080/dito/services/zenso/Authentication.svc/</string>-->
+    <!--<string name="url_authentication">http://servicios.abakosoluciones.com:2080/dito/services/zenso/Authentication.svc/</string>-->
+
+    <string name="url_authentication">http://201.232.32.152:2080/dito/services/zenso/Authentication.svc/</string>
+    <string name="url_administration">http://201.232.32.152:2080/dito/services/zenso/ZensoAdministration.svc/</string>
+
+    <string name="title_activity_act_configuracion">Configuración</string>
+    <string name="configuracion">Configurar aplicación</string>
+    <string name="urlinicial">http://url_base_server:2080/dito/services/zenso/</string>
+    <string name="textoGuardar">Guardar Configuración</string>
+    <string name="tiempoenvio">Tiempo de envió</string>
+    <string name="hideurl">Url base</string>
+    <string name="title_activity_map_main">Map</string>
+
+
+</resources>

@@ -1,0 +1,100 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="co.strategicsoft.ditocenso.Activity.ActLogin">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_height="match_parent"
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_centerVertical="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:paddingLeft="25dp"
+                android:paddingRight="25dp">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageView"
+                    android:layout_marginBottom="30dp"
+                    android:src="@drawable/icono5"
+                    android:layout_gravity="center_horizontal"
+                    android:contentDescription="@string/app_name" />
+
+                <com.rengwuxian.materialedittext.MaterialEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Compañía"
+                    android:text=""
+                    android:textCursorDrawable="@drawable/text_cursor_cyan"
+                    android:textSize="17sp"
+                    app:met_baseColor="@android:color/black"
+                    app:met_floatingLabel="highlight"
+                    android:id="@+id/codeCompany"
+                    app:met_primaryColor="@color/color_4"
+                    app:met_singleLineEllipsis="true" />
+
+                <com.rengwuxian.materialedittext.MaterialEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/texto_usuario"
+                    android:text=""
+                    android:textCursorDrawable="@drawable/text_cursor_cyan"
+                    android:textSize="17sp"
+                    app:met_baseColor="@android:color/black"
+                    app:met_floatingLabel="highlight"
+                    android:id="@+id/codeUser"
+                    app:met_primaryColor="@color/color_4"
+                    app:met_singleLineEllipsis="true" />
+
+
+                <com.rengwuxian.materialedittext.MaterialEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/texto_contrasena"
+                    android:inputType="textPassword"
+                    android:text=""
+                    android:textCursorDrawable="@drawable/text_cursor_cyan"
+                    android:textSize="17sp"
+                    app:met_baseColor="@android:color/black"
+                    app:met_floatingLabel="highlight"
+                    android:id="@+id/password"
+                    app:met_primaryColor="@color/color_4"
+                    app:met_singleLineEllipsis="true" />
+
+
+                <com.gc.materialdesign.views.ButtonRectangle
+                    android:id="@+id/login"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/color_principal"
+                    android:text="@string/texto_ingresar"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="30dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Configuración"
+                    android:layout_marginTop="7dp"
+                    android:id="@+id/txtConfiguracion"
+                    android:layout_gravity="center_horizontal" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+    </ScrollView>
+
+</LinearLayout>
