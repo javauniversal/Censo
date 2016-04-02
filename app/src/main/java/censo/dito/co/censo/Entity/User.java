@@ -17,7 +17,7 @@ public class User {
     @SerializedName("PhotoURL")
     private String PhotoURL;
 
-    @SerializedName("IsAuthenticated")
+    @SerializedName("ActiveRoute")
     private Route ActiveRoute;
 
     public int getId() {

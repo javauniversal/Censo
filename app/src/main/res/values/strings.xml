@@ -44,6 +44,13 @@
     <string name="query_detalleRuta">CREATE TABLE DetalleRuta (id integer primary key AUTOINCREMENT, idRuta INT, tiemposeguimiento DATETIME, latitud REAL, longitud REAL)</string>
     <string name="query_mapPoint">CREATE TABLE MapPoint (id integer primary key AUTOINCREMENT, orden INT, idRuta INT, latitud REAL, longitud REAL)</string>
     <string name="query_configuracionbase">CREATE TABLE ConfiguracionApp (id integer primary key AUTOINCREMENT, urlBase TEXT, intervalBase INT)</string>
+    <string name="query_censodd">CREATE TABLE censoDb (id integer primary key AUTOINCREMENT, userid INT, datatime TEXT, latitud double, longitud double, data TEXT, companycode TEXT, routeid INT)</string>
+
+    <string name="query_seguimiento">CREATE TABLE seguimiento (id integer primary key AUTOINCREMENT, userid INT, ruteid INT, fecha TEXT, latitud double, longitud double)</string>
+
+    <string name="query_tracking">CREATE TABLE tracking (id integer primary key AUTOINCREMENT, idRuta INT, latitud REAL, longitud REAL, datetime TEXT)</string>
+
+
     <string name="title_activity_act_destall_maps">Detalle en el mapa</string>
 
     <string name="hello_world">Hello world!</string>
@@ -59,8 +66,9 @@
     <!--<string name="url_authentication">http://201.232.32.152:2080/dito/services/zenso/Authentication.svc/</string>-->
     <!--<string name="url_authentication">http://servicios.abakosoluciones.com:2080/dito/services/zenso/Authentication.svc/</string>-->
 
-    <string name="url_authentication">http://201.232.32.152:2080/dito/services/zenso/Authentication.svc/</string>
-    <string name="url_administration">http://201.232.32.152:2080/dito/services/zenso/ZensoAdministration.svc/</string>
+    <!--<string name="url_authentication">http://201.232.32.152:2080/dito/services/zenso/Authentication.svc/</string>-->
+    <string name="url_authentication">http://181.143.94.74:2080/dito/services/zenso/Authentication.svc/</string>
+    <string name="url_administration">http://181.143.94.74:2080/dito/services/zenso/ZensoAdministration.svc/</string>
 
     <string name="title_activity_act_configuracion">Configuración</string>
     <string name="configuracion">Configurar aplicación</string>
@@ -69,6 +77,7 @@
     <string name="tiempoenvio">Tiempo de envió</string>
     <string name="hideurl">Url base</string>
     <string name="title_activity_map_main">Map</string>
+
 
 
 </resources>

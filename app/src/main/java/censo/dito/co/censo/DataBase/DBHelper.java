@@ -11,9 +11,15 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import censo.dito.co.censo.Entity.Censu;
+import censo.dito.co.censo.Entity.CensuPointDataRequest;
 import censo.dito.co.censo.Entity.Configuracion;
 import censo.dito.co.censo.Entity.LoginResponse;
 import censo.dito.co.censo.Entity.Route;
+import censo.dito.co.censo.Entity.RouteMapPoint;
+import censo.dito.co.censo.Entity.Seguimiento;
+import censo.dito.co.censo.Entity.ShippingForm;
+import censo.dito.co.censo.Entity.TracePoint;
 import censo.dito.co.censo.R;
 
 public class DBHelper extends SQLiteOpenHelper {
@@ -39,11 +45,20 @@ public class DBHelper extends SQLiteOpenHelper {
 
         String sqlConfiguracion = context.getString(R.string.query_configuracionbase);
 
+        String sqlCensoDb = context.getString(R.string.query_censodd);
+
+        String sqlSeguimiento = context.getString(R.string.query_seguimiento);
+
+        String sqlTrackingDetail = context.getString(R.string.query_tracking);
+
         db.execSQL(sqlRuta);
         db.execSQL(sqlCenso);
         db.execSQL(sqlDetallRuta);
         db.execSQL(sqlMapPonit);
         db.execSQL(sqlConfiguracion);
+        db.execSQL(sqlCensoDb);
+        db.execSQL(sqlSeguimiento);
+        db.execSQL(sqlTrackingDetail);
     }
 
     @Override
@@ -54,7 +69,81 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS DestalleRuta");
         db.execSQL("DROP TABLE IF EXISTS MapPoint");
         db.execSQL("DROP TABLE IF EXISTS ConfiguracionApp");
+        db.execSQL("DROP TABLE IF EXISTS censoDb");
+        db.execSQL("DROP TABLE IF EXISTS seguimiento");
+        db.execSQL("DROP TABLE IF EXISTS tracking");
         this.onCreate(db);
+    }
+
+    //Insert censo formulario.
+    public boolean insertCensoFormulario (CensuPointDataRequest data) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        try {
+            values.put("userid", data.getUserId());
+            values.put("datatime", data.getCoordenadas().getDateTime());
+            values.put("latitud", data.getCoordenadas().getLatitude());
+            values.put("longitud", data.getCoordenadas().getLongitude());
+            values.put("data", data.getData());
+            values.put("companycode", data.getCompanyCode());
+            values.put("routeid", data.getRouteId());
+
+            db.insert("censoDb", null, values);
+            db.close();
+
+        }catch (SQLiteConstraintException e){
+            Log.d("data", "failure to insert word,", e);
+            return false;
+        }
+        return true;
+    }
+
+    //Recuperamos los censos que no se pudieron enviar.
+    public List<CensuPointDataRequest> getCenso() {
+
+        List<CensuPointDataRequest> lists = new ArrayList<>();
+
+        String sql = "SELECT userid, datatime, latitud, longitud, data, companycode, routeid, id  FROM censoDb";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(sql, null);
+
+        CensuPointDataRequest censo = null;
+        TracePoint tracePoint = null;
+        if (cursor.moveToFirst()) {
+            do {
+
+                censo = new CensuPointDataRequest();
+                tracePoint = new TracePoint();
+
+                censo.setId_censo(Integer.parseInt(cursor.getString(7)));
+                censo.setUserId(Integer.parseInt(cursor.getString(0)));
+                censo.setData(cursor.getString(4));
+                censo.setCompanyCode(cursor.getString(5));
+                censo.setRouteId(Integer.parseInt(cursor.getString(6)));
+
+                tracePoint.setDateTime(cursor.getString(1));
+                tracePoint.setLatitude(Double.parseDouble(cursor.getString(2)));
+                tracePoint.setLongitude(Double.parseDouble(cursor.getString(3)));
+
+                censo.setCoordenadas(tracePoint);
+
+                lists.add(censo);
+
+            } while(cursor.moveToNext());
+        }
+
+        return lists;
+
+    }
+
+    //Eliminamos las rutas del usuario.
+    public boolean deleteCenso(int id){
+        SQLiteDatabase db = this.getWritableDatabase();
+        int p = db.delete("censoDb", "id = ?", new String[]{String.valueOf(id)});
+        db.close();
+        return p > 0;
     }
 
     //Insert configuracion.
@@ -86,6 +175,9 @@ public class DBHelper extends SQLiteOpenHelper {
     public boolean insertRuta (LoginResponse data){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
+        ContentValues values2 = new ContentValues();
+        ContentValues values3 = new ContentValues();
+
         try {
             for (int i = 0; i < data.getRoutes().size(); i++) {
                 values.put("id", data.getRoutes().get(i).getId());
@@ -93,8 +185,29 @@ public class DBHelper extends SQLiteOpenHelper {
                 values.put("fechainicial", data.getRoutes().get(i).getStart());
                 values.put("fechafinal", data.getRoutes().get(i).getEnd());
                 values.put("estadoruta", data.getRoutes().get(i).getState());
+
                 db.insert("Ruta", null, values);
+
+                for (int e = 0; e < data.getRoutes().get(i).getMap().size(); e++){
+                    values2.put("orden", data.getRoutes().get(i).getMap().get(e).getOrder());
+                    values2.put("idRuta", data.getRoutes().get(i).getId());
+                    values2.put("latitud", data.getRoutes().get(i).getMap().get(e).getLatitude());
+                    values2.put("longitud", data.getRoutes().get(i).getMap().get(e).getLongitude());
+
+                    db.insert("MapPoint", null, values2);
+                }
+
+                for (int f = 0; f < data.getRoutes().get(i).getTrackingDetail().size(); f++){
+                    values3.put("idRuta", data.getRoutes().get(i).getId());
+                    values3.put("latitud", data.getRoutes().get(i).getTrackingDetail().get(f).getLatitude());
+                    values3.put("longitud", data.getRoutes().get(i).getTrackingDetail().get(f).getLongitude());
+                    values3.put("datetime", data.getRoutes().get(i).getTrackingDetail().get(f).getDateTime());
+
+                    db.insert("tracking", null, values3);
+                }
+
             }
+
             Log.d("Ruta", data.toString());
             db.close();
 
@@ -102,15 +215,61 @@ public class DBHelper extends SQLiteOpenHelper {
             Log.d("data", "failure to insert word,", e);
             return false;
         }
+
         return true;
     }
+
+    public List<TracePoint> getTracePoint(int idRuta) {
+        ArrayList<TracePoint> tracePointArrayList = new ArrayList<>();
+        String sql = "SELECT idRuta, latitud, longitud, datetime FROM tracking WHERE idRuta = "+idRuta+" ";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(sql, null);
+
+        TracePoint tracePoint;
+        if (cursor.moveToFirst()) {
+            do {
+                tracePoint = new TracePoint();
+                tracePoint.setIdRoute(Integer.parseInt(cursor.getString(0)));
+                tracePoint.setLatitude(Double.parseDouble(cursor.getString(1)));
+                tracePoint.setLongitude(Double.parseDouble(cursor.getString(2)));
+                tracePoint.setDateTime(cursor.getString(3));
+
+                tracePointArrayList.add(tracePoint);
+            } while(cursor.moveToNext());
+        }
+        return tracePointArrayList;
+    }
+
+    //Recuperamos la lista de rutas.
+    public List<RouteMapPoint> getMapPoint(int idRuta) {
+        ArrayList<RouteMapPoint> routeMapPointArrayList = new ArrayList<>();
+        String sql = "SELECT orden, idRuta, latitud, longitud FROM MapPoint WHERE idRuta = "+idRuta+" ";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(sql, null);
+
+        RouteMapPoint routeMapPoint;
+        if (cursor.moveToFirst()) {
+            do {
+                routeMapPoint = new RouteMapPoint();
+                routeMapPoint.setOrder(Integer.parseInt(cursor.getString(0)));
+                routeMapPoint.setIdRoute(Integer.parseInt(cursor.getString(1)));
+                routeMapPoint.setLatitude(Double.parseDouble(cursor.getString(2)));
+                routeMapPoint.setLongitude(Double.parseDouble(cursor.getString(3)));
+                routeMapPointArrayList.add(routeMapPoint);
+            } while(cursor.moveToNext());
+        }
+        return routeMapPointArrayList;
+    }
+
 
     //Eliminamos las rutas del usuario.
     public boolean deleteRuta(){
         SQLiteDatabase db = this.getWritableDatabase();
-        int p = db.delete("Ruta", null, null);
+        int a = db.delete("Ruta", null, null);
+        int b = db.delete("MapPoint", null, null);
+        int c = db.delete("tracking", null, null);
         db.close();
-        return p > 0;
+        return c > 0;
     }
 
     //Recuperamos la lista de rutas.
@@ -209,6 +368,83 @@ public class DBHelper extends SQLiteOpenHelper {
             return false;
         }
         return true;
+    }
+
+    //Recuperamos el seguimiento para guardar en base de datos.
+    public List<Seguimiento> getCensuSeguimiento() {
+
+        ArrayList<Seguimiento> addSeguimientos = new ArrayList<>();
+
+        String sql = "SELECT DISTINCT userid, ruteid FROM seguimiento";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(sql, null);
+
+        Seguimiento seguimiento;
+        if (cursor.moveToFirst()) {
+            do {
+                seguimiento = new Seguimiento();
+                seguimiento.setUser_id(Integer.parseInt(cursor.getString(0)));
+                seguimiento.setRute_id(Integer.parseInt(cursor.getString(1)));
+                addSeguimientos.add(seguimiento);
+            } while(cursor.moveToNext());
+        }
+        return addSeguimientos;
+    }
+
+    public List<Seguimiento> getCensuSeguimiento(int userId, int ruteid) {
+
+        ArrayList<Seguimiento> addSeguimientos = new ArrayList<>();
+
+        String sql = "SELECT userid, ruteid, fecha, latitud, longitud FROM seguimiento WHERE userid = "+userId+" AND ruteid = "+ruteid+" ";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(sql, null);
+
+        Seguimiento seguimiento;
+        if (cursor.moveToFirst()) {
+            do {
+                seguimiento = new Seguimiento();
+                seguimiento.setUser_id(Integer.parseInt(cursor.getString(0)));
+                seguimiento.setRute_id(Integer.parseInt(cursor.getString(1)));
+                seguimiento.setFecha(cursor.getString(2));
+                seguimiento.setLatitud(Double.parseDouble(cursor.getString(3)));
+                seguimiento.setLongitud(Double.parseDouble(cursor.getString(4)));
+                addSeguimientos.add(seguimiento);
+            } while(cursor.moveToNext());
+        }
+
+        return addSeguimientos;
+
+    }
+
+    //Insert el seguimiento del usuario.
+    public boolean insertSeguimiento (Seguimiento data){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        try {
+            values.put("userid", data.getUser_id());
+            values.put("ruteid", data.getRute_id());
+            values.put("fecha", data.getFecha());
+            values.put("latitud", data.getLatitud());
+            values.put("longitud", data.getLongitud());
+
+            db.insert("seguimiento", null, values);
+
+            Log.d("seguimiento", data.toString());
+            db.close();
+        }catch (SQLiteConstraintException e){
+            Log.d("data", "failure to insert word,", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    //Eliminamos las rutas del usuario.
+    public boolean deleteSeguimiento(int usuarioid, int idrute){
+        SQLiteDatabase db = this.getWritableDatabase();
+        int p = db.delete("seguimiento", "userid = ? AND ruteid = ?", new String[]{String.valueOf(usuarioid), String.valueOf(idrute)});
+        db.close();
+        return p > 0;
     }
 
 }

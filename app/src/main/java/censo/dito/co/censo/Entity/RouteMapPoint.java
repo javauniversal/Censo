@@ -7,6 +7,16 @@ public class RouteMapPoint extends Point {
     @SerializedName("Order")
     private int Order;
 
+    private int idRoute;
+
+    public int getIdRoute() {
+        return idRoute;
+    }
+
+    public void setIdRoute(int idRoute) {
+        this.idRoute = idRoute;
+    }
+
     public int getOrder() {
         return Order;
     }

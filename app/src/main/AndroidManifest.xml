@@ -1,21 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="censo.dito.co.censo" >
+    package="censo.dito.co.censo">
 
-    <!--
-         The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
-         Google Maps Android API v2, but you must specify either coarse or fine
-         location permissions for the 'MyLocation' functionality. 
-    -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme" >
-
+        android:theme="@style/AppTheme">
         <activity
             android:name=".Activities.ActSplashMain"
             android:label="@string/app_name"
@@ -32,7 +27,7 @@
              Note that the API key is linked to the encryption key used to sign the APK.
              You need a different API key for each encryption key, including the release key that is used to
              sign the APK for publishing.
-             You can define the keys for the debug and release targets in src/debug/ and src/release/. 
+             You can define the keys for the debug and release targets in src/debug/ and src/release/.
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -40,48 +35,61 @@
 
         <activity
             android:name=".MapMain"
-            android:label="@string/title_activity_map_main" >
-        </activity>
-
+            android:label="@string/title_activity_map_main" />
         <activity
             android:name=".Activities.ActLogin"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
 
-        <service android:name=".Services.ServiceLocation" >
-        </service>
+        <service android:name=".Services.ServiceLocation" />
 
         <activity
             android:name=".ActDestallMaps"
-            android:label="@string/title_activity_act_destall_maps" >
-        </activity>
+            android:label="@string/title_activity_act_destall_maps" />
         <activity
             android:name=".Activities.ActEstadisticas"
-            android:label="@string/title_activity_act_estadisticas" >
-        </activity>
+            android:label="@string/title_activity_act_estadisticas" />
         <activity
             android:name=".Activities.ActDatosCensoF"
-            android:label="@string/title_activity_act_datos_censo_f" >
-        </activity>
+            android:label="@string/title_activity_act_datos_censo_f" />
         <activity
             android:name=".Activities.ActDetalleCenso"
-            android:label="@string/title_activity_act_detalle_censo" >
-        </activity>
+            android:label="@string/title_activity_act_detalle_censo" />
         <activity
             android:name=".Activities.GetLatitudLongitud"
-            android:label="@string/title_activity_act_detalle_censo" >
-        </activity>
+            android:label="@string/title_activity_act_detalle_censo" />
 
         <service
             android:name=".Services.ServiceData"
             android:enabled="true"
-            android:exported="true" >
-        </service>
+            android:exported="true" />
 
         <activity
             android:name=".Activities.ActConfiguracion"
             android:label="@string/title_activity_act_configuracion" />
 
+        <service
+            android:name=".Services.ServiceCoodenadas"
+            android:enabled="true"
+            android:exported="true" />
+
+        <receiver
+            android:name=".Services.ReceiverBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".Services.ServiceSeguimiento"
+            android:enabled="true"
+            android:exported="true" />
+        <service
+            android:name=".Services.ServiceInsertSegui"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>

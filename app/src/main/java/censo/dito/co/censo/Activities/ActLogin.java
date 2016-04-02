@@ -8,9 +8,27 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.ParseError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.ServerError;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.google.gson.Gson;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
+import java.util.Map;
+
 import censo.dito.co.censo.DataBase.DBHelper;
 import censo.dito.co.censo.Entity.Configuracion;
 import censo.dito.co.censo.Entity.LoginRequest;
@@ -18,8 +36,11 @@ import censo.dito.co.censo.Entity.LoginResponse;
 import censo.dito.co.censo.MapMain;
 import censo.dito.co.censo.R;
 import censo.dito.co.censo.Services.ServiceData;
+import censo.dito.co.censo.Services.ServiceInsertSegui;
 
-public class ActLogin extends AppCompatActivity implements View.OnClickListener {
+import static censo.dito.co.censo.Entity.LoginResponse.setLoginRequest;
+
+public class ActLogin extends AvtivityBase implements View.OnClickListener {
 
     private EditText codeCompany;
     private EditText codeUser;
@@ -51,7 +72,7 @@ public class ActLogin extends AppCompatActivity implements View.OnClickListener 
         login.setOnClickListener(this);
     }
 
-    public void PostClick() {
+    /*public void PostClick() {
 
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setCiaId(codeCompany.getText().toString());
@@ -68,9 +89,71 @@ public class ActLogin extends AppCompatActivity implements View.OnClickListener 
         serviceData.PostClick();
         parseJSON(serviceData.dataServices);
 
+    }*/
+
+    public void validateNegocio(){
+
+        String url = String.format("%1$s%2$s", "http://181.143.94.74:2080/dito/services/zenso/Authentication.svc/", "Login");
+        requestQueue = Volley.newRequestQueue(this);
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setCiaId(codeCompany.getText().toString());
+        loginRequest.setUser(codeUser.getText().toString());
+        loginRequest.setPassword(password.getText().toString());
+
+        try {
+
+            HashMap<String, Object> postParameters = new HashMap<>();
+            postParameters.put("CiaId", loginRequest.getCiaId());
+            postParameters.put("User", loginRequest.getUser());
+            postParameters.put("Password", loginRequest.getPassword());
+
+            String jsonParameters = new Gson().toJson(postParameters);
+            JSONObject jsonRootObject = new JSONObject(jsonParameters);
+
+            JsonObjectRequest jsArrayRequest = new JsonObjectRequest(
+                    Request.Method.POST,
+                    url,
+                    jsonRootObject,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            parseJSON(response);
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            if (error instanceof TimeoutError || error instanceof NoConnectionError) {
+                                Toast.makeText(ActLogin.this, "Error de tiempo de espera",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof AuthFailureError) {
+                                Toast.makeText(ActLogin.this, "Error Servidor",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof ServerError) {
+                                Toast.makeText(ActLogin.this, "Server Error",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof NetworkError) {
+                                Toast.makeText(ActLogin.this, "Error de red",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof ParseError) {
+                                Toast.makeText(ActLogin.this, "Error al serializar los datos",Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    headers.put("Content-Type", "application/json; charset=utf-8");
+                    return headers;
+                }
+            };
+
+            requestQueue.add(jsArrayRequest);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 
-    private void parseJSON(String json) {
+    private void parseJSON(JSONObject json) {
 
         try {
             Gson gson = new Gson();
@@ -78,8 +161,8 @@ public class ActLogin extends AppCompatActivity implements View.OnClickListener 
             if (json == null || json.equals("")){
                 Toast.makeText(this, "Problemas al recuperar la información", Toast.LENGTH_SHORT).show();
             }else {
-                LoginResponse loginResponse = gson.fromJson(json, LoginResponse.class);
-                LoginResponse.setLoginRequest(loginResponse);
+                LoginResponse loginResponse = gson.fromJson(String.valueOf(json), LoginResponse.class);
+                setLoginRequest(loginResponse);
 
                 if(loginResponse.isAuthenticated()){
                     //Insert Data Base.
@@ -88,6 +171,9 @@ public class ActLogin extends AppCompatActivity implements View.OnClickListener 
                     if (mydb.insertRuta(loginResponse)){
                         startActivity(new Intent(ActLogin.this, MapMain.class));
                         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+
+                        //startService(new Intent(this, ServiceInsertSegui.class));
+
                         finish();
                     }else{
                         Toast.makeText(this, "Problemas al guardar La primera Ruta!", Toast.LENGTH_SHORT).show();
@@ -126,7 +212,7 @@ public class ActLogin extends AppCompatActivity implements View.OnClickListener 
                         password.setFocusableInTouchMode(true);
                         password.requestFocus();
                     } else {
-                        PostClick();
+                        validateNegocio();
                     }
                 }else{
                     Toast.makeText(this, "La aplicación no esta configurada!", Toast.LENGTH_SHORT).show();

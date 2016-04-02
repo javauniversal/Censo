@@ -31,11 +31,11 @@ public class ActSplashMain extends AwesomeSplash {
         configSplash.setAnimLogoSplashTechnique(Techniques.DropOut); //choose one form Techniques (ref: https://github.com/daimajia/AndroidViewAnimations)
 
         //Customize Title
-        configSplash.setTitleSplash("Flexible y adaptable.");
+        /*configSplash.setTitleSplash("Flexible y adaptable.");
         configSplash.setTitleTextColor(R.color.textColorTitle);
         configSplash.setTitleTextSize(25f); //float value
         configSplash.setAnimTitleDuration(3000);
-        configSplash.setAnimTitleTechnique(Techniques.FlipInX);
+        configSplash.setAnimTitleTechnique(Techniques.FlipInX);*/
     }
 
     @Override

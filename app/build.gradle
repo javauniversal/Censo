@@ -8,8 +8,8 @@ android {
         applicationId "censo.dito.co.censo"
         minSdkVersion 15
         targetSdkVersion 22
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
     }
     buildTypes {
         release {
@@ -46,4 +46,5 @@ dependencies {
     compile 'com.afollestad:material-dialogs:0.7.6.0'
     compile 'de.hdodenhof:circleimageview:1.3.0'
     compile 'com.baoyz.swipemenulistview:library:1.2.1'
+    compile 'com.mcxiaoke.volley:library:1.0.19'
 }

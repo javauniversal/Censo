@@ -1,5 +1,6 @@
 package censo.dito.co.censo.Fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.InputType;
@@ -13,6 +14,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -26,17 +28,22 @@ import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import censo.dito.co.censo.DataBase.DBHelper;
 import censo.dito.co.censo.Entity.CensuPointDataRequest;
 import censo.dito.co.censo.Entity.LoginResponse;
 import censo.dito.co.censo.Entity.Route;
+import censo.dito.co.censo.Entity.ShippingForm;
 import censo.dito.co.censo.Entity.TracePoint;
+import censo.dito.co.censo.MapMain;
 import censo.dito.co.censo.R;
+import censo.dito.co.censo.Services.ConnectionDetector;
 import censo.dito.co.censo.Services.ServiceData;
 import censo.dito.co.censo.Services.ServiceLocation;
 
@@ -45,12 +52,18 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
     private static final int MY_BUTTON = 9000+1;
     private static final String MY_TEXT = "ENVIAR";
     private Route route;
+    ConnectionDetector cd;
+    Boolean isInternetPresent = false;
+    private LinearLayout ll;
+    private DBHelper mydb;
+
     public static FragmentCenso newInstance(Bundle bundle) {
         FragmentCenso fragment = new FragmentCenso();
         fragment.setArguments(bundle);
         return fragment;
     }
     public FragmentCenso() {}
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,10 +78,16 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        LinearLayout ll = (LinearLayout) getActivity().findViewById(R.id.linearLayout2);
+        mydb = new DBHelper(getActivity());
 
+        cargarFormulario();
+    }
+
+    public void cargarFormulario(){
+
+        cd = new ConnectionDetector(getActivity());
+        ll = (LinearLayout) getActivity().findViewById(R.id.linearLayout2);
         route = new Route();
-
         for(int i = 0; i < LoginResponse.getLoginRequest().getRoutes().size(); i++){
             if(LoginResponse.getLoginRequest().getRoutes().get(i).getState() == 2){
                 route.setStrucDataEntry(LoginResponse.getLoginRequest().getRoutes().get(i).getStrucDataEntry());
@@ -100,6 +119,7 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
                         TextView tve = new TextView(getActivity());
                         tve.setText(eElement.getAttribute("c"));
                         tve.setLayoutParams(layoutParams);
+                        tve.setId(Integer.parseInt(eElement.getAttribute("id")));
                         ll.addView(tve);
 
                         EditText et = new EditText(getActivity());
@@ -171,6 +191,7 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
                         ArrayAdapter<String> lista = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, al);
                         lista.setDropDownViewResource( android.R.layout.simple_spinner_dropdown_item );
                         _spinner.setAdapter(lista);
+                        _spinner.setTag(eElement.getAttribute("id"));
                         _spinner.setSelection(0);
 
                         ll.addView(_spinner);
@@ -196,7 +217,15 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
     public void onClick(View v) {
         switch (v.getId()){
             case MY_BUTTON:
-                saveAnswers();
+
+                isInternetPresent = cd.isConnected();
+
+                if (isInternetPresent){
+                    saveAnswers();
+                } else {
+                    Toast.makeText(getActivity(), "Por favor, inténtalo de nuevo cuando esté conectado a Internet", Toast.LENGTH_LONG).show();
+                }
+
                 break;
         }
     }
@@ -216,7 +245,7 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
             if(child instanceof EditText) {
                 //Support for EditText
                 EditText et = (EditText)child;
-                XmlData = XmlData + "<e c=\""+ et.getHint() +"\"  v=\"" + et.getText() + "\" />";
+                XmlData = XmlData + "<e id=\""+et.getId()+"\"  t=\"2\" c=\""+ et.getHint() +"\"  v=\"" + et.getText() + "\" />";
 
             }else if (child instanceof CheckBox){
                 CheckBox cb = (CheckBox)child;
@@ -226,10 +255,11 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
                 }
             }else if (child instanceof Spinner){
                 Spinner spinner = (Spinner)child;
-                XmlData = XmlData + "<e c=\""+ spinner.getId() +"\" v=\"" + spinner.getSelectedItem().toString() + "\" />";
+                XmlData = XmlData + "<e id=\""+spinner.getTag()+"\" t=\"1\" c=\""+ spinner.getSelectedItem().toString() +"\" v=\"" + spinner.getSelectedItem().toString() + "\" />";
             }
         }
-        XmlData = XmlData + "<e v=\"" + Productos + "\" />";
+
+        XmlData = XmlData + "<e id=\""+11+"\" t=\"3\" c=\"Producto\" v=\"" + Productos + "\" />";
         XmlData = XmlData + "</f>";
 
         guardarCensoData(XmlData);
@@ -237,28 +267,21 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
 
     public void guardarCensoData(String xml){
 
-        //SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        Calendar calendar = Calendar.getInstance();
-        calendar.clear();
-        calendar.set(Calendar.YEAR, 2015);
-        calendar.set(Calendar.DAY_OF_MONTH, 9);
-        calendar.set(Calendar.MONTH, 7);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-
         CensuPointDataRequest censuPointDataRequest = new CensuPointDataRequest();
         TracePoint tracePoint = new TracePoint();
         ServiceLocation serviceLocation = new ServiceLocation(getActivity());
         censuPointDataRequest.setUserId(LoginResponse.getLoginRequest().getUser().getId());
-        censuPointDataRequest.setRouteId(route.getId());
+        censuPointDataRequest.setRouteId(1);
         censuPointDataRequest.setCompanyCode("001");
         censuPointDataRequest.setData(xml);
 
-        tracePoint.setDateTime("DateTime(2014, 4, 21)");
+        Date pStart = new Date();
+
+        tracePoint.setDateTime("/Date(" + pStart.getTime() + "+0200)/");
+
         tracePoint.setLatitude(serviceLocation.getLatitude());
         tracePoint.setLongitude(serviceLocation.getLongitude());
+
         censuPointDataRequest.setCoordenadas(tracePoint);
 
         HashMap<String, Object> postParameters = new HashMap<>();
@@ -274,6 +297,26 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
         serviceData.PostClick();
         String datt = serviceData.dataServices;
 
+        if (datt == null){
+            Toast.makeText(getActivity(), "Por favor, inténtalo de nuevo cuando esté conectado a Internet", Toast.LENGTH_LONG).show();
+
+            if (mydb.insertCensoFormulario(censuPointDataRequest)) {
+                Toast.makeText(getActivity(), "Censo almacenado en la base de datos", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getActivity(), "Problemas al guardar el censo en la base de datos", Toast.LENGTH_LONG).show();
+            }
+
+            ll.removeAllViews();
+            cargarFormulario();
+
+        } else if (datt.equals("true")){
+            Toast.makeText(getActivity(), "Censo guardado exitosamente", Toast.LENGTH_LONG).show();
+
+            ll.removeAllViews();
+            cargarFormulario();
+        } else if (datt.equals("false")) {
+            Toast.makeText(getActivity(), "No se pudo guardar el censo", Toast.LENGTH_LONG).show();
+        }
     }
 
     public String ConcatProducts(String productos, String ProductDescription) {
@@ -284,4 +327,5 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
         }
         return productos;
     }
+
 }

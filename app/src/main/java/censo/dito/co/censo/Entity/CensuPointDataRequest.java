@@ -6,6 +6,7 @@ package censo.dito.co.censo.Entity;
 
 public class CensuPointDataRequest {
 
+    private int id_censo;
     private int UserId;
     private int RouteId;
     private String CompanyCode;
@@ -50,5 +51,13 @@ public class CensuPointDataRequest {
 
     public void setCoordenadas(TracePoint coordenadas) {
         Coordenadas = coordenadas;
+    }
+
+    public int getId_censo() {
+        return id_censo;
+    }
+
+    public void setId_censo(int id_censo) {
+        this.id_censo = id_censo;
     }
 }

@@ -2,6 +2,7 @@ package censo.dito.co.censo;
 
 import android.content.Intent;
 import android.content.IntentSender;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -11,7 +12,19 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.ParseError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.ServerError;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -25,14 +38,29 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.gson.Gson;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import censo.dito.co.censo.Activities.ActDatosCensoF;
 import censo.dito.co.censo.Activities.ActEstadisticas;
+import censo.dito.co.censo.Activities.AvtivityBase;
 import censo.dito.co.censo.DataBase.DBHelper;
+import censo.dito.co.censo.Entity.Censu;
+import censo.dito.co.censo.Entity.ListCensu;
+import censo.dito.co.censo.Entity.RouteMapPoint;
+import censo.dito.co.censo.Entity.TracePoint;
 
-public class ActDestallMaps extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener {
+import static censo.dito.co.censo.Entity.LoginResponse.getLoginRequest;
+
+public class ActDestallMaps extends AvtivityBase implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener {
 
     public static final String TAG = ActDestallMaps.class.getSimpleName();
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
@@ -50,6 +78,7 @@ public class ActDestallMaps extends AppCompatActivity implements GoogleApiClient
     private CheckBox rutaChk;
     private CheckBox censoChk;
     private CheckBox seguimientoChk;
+    List<Censu> loginResponse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,16 +118,17 @@ public class ActDestallMaps extends AppCompatActivity implements GoogleApiClient
         addMapLayout();
 
 
-        /*List<MapPoint> mapPoints = myDB.getMapPoint(bundle.getInt("idRuta"));
+        List<RouteMapPoint> mapPoints = myDB.getMapPoint(bundle.getInt("idRuta"));
+
         if (mapPoints.size() > 0) {
             regionLayer = new PolygonOptions();
             regionLayer.strokeWidth(5).strokeColor(Color.argb(20, 50, 0, 255)).fillColor(Color.argb(20, 50, 0, 255));
 
             for (int i = 0; i < mapPoints.size(); i++) {
-                regionLayer.add(new LatLng(mapPoints.get(i).get_latitud(), mapPoints.get(i).get_longitud()));
+                regionLayer.add(new LatLng(mapPoints.get(i).getLatitude(), mapPoints.get(i).getLongitude()));
             }
 
-            LatLng ltl = new LatLng(mapPoints.get(0).get_latitud(), mapPoints.get(0).get_longitud());
+            LatLng ltl = new LatLng(mapPoints.get(0).getLatitude(), mapPoints.get(0).getLongitude());
 
             regionLayer.add(ltl);
 
@@ -110,32 +140,21 @@ public class ActDestallMaps extends AppCompatActivity implements GoogleApiClient
                     .build();                   // Creates a CameraPosition from the builder
 
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-        }*/
+
+        }
 
         //Seguimiento.
-        /*List<DetalleRuta> pointDetalle = myDB.getDetalleRuta(bundle.getInt("idRuta"));
+        List<TracePoint> pointDetalle = myDB.getTracePoint(bundle.getInt("idRuta"));
         if (pointDetalle.size() > 0) {
             lineSeguimiento = new PolylineOptions();
             lineSeguimiento.width(6).color(getResources().getColor(R.color.color_9));
 
             for (int i = 0; i < pointDetalle.size(); i++) {
-                lineSeguimiento.add(new LatLng(pointDetalle.get(i).get_latitud(), pointDetalle.get(i).get_longitud()));
+                lineSeguimiento.add(new LatLng(pointDetalle.get(i).getLatitude(), pointDetalle.get(i).getLongitude()));
             }
         }
 
-        //Censo.
-        List<Censo> pointCenso = myDB.getCensoRuta(bundle.getInt("idRuta"));
-        if (pointCenso.size() > 0) {
-            censoLayer = new ArrayList<>();
-            for (int i = 0; i < pointCenso.size(); i++) {
-                censoLayer.add(new MarkerOptions().position(new LatLng(pointCenso.get(i).get_latitud(), pointCenso.get(i).get_longitud()))
-                        .snippet(pointCenso.get(i).get_tiempocenso())
-                        .anchor(0.5f, 0.5f)
-                        .flat(true)
-                        .visible(true)
-                        .draggable(false));
-            }
-        }*/
+        getCensoPoint();
 
         rutaChk = (CheckBox)findViewById(R.id.checRuta);
         rutaChk.setOnClickListener(this);
@@ -155,8 +174,10 @@ public class ActDestallMaps extends AppCompatActivity implements GoogleApiClient
         if (CensoLayerVisible)
             addAllMarkers();
 
-        if (SeguiLayerVisible)
-            mMap.addPolyline(lineSeguimiento);
+        if (SeguiLayerVisible) {
+            if (lineSeguimiento != null)
+                mMap.addPolyline(lineSeguimiento);
+        }
     }
 
     private void addMapLayout() {
@@ -174,6 +195,88 @@ public class ActDestallMaps extends AppCompatActivity implements GoogleApiClient
         }
 
         //PaintWalkMap
+    }
+
+    public void getCensoPoint() {
+
+        String url = String.format("%1$s%2$s", "http://181.143.94.74:2080/dito/services/zenso/ZensoAdministration.svc/", "GetCensuData");
+        requestQueue = Volley.newRequestQueue(this);
+
+        try {
+
+            HashMap<String, Object> postParameters = new HashMap<String, Object>();
+            postParameters.put("userId", getLoginRequest().getUser().getId());
+            postParameters.put("routeId", bundle.getInt("idRuta"));
+
+            String jsonParameters = new Gson().toJson(postParameters);
+            JSONObject jsonRootObject = new JSONObject(jsonParameters);
+
+            JsonArrayRequest jsArrayRequest = new JsonArrayRequest(
+                    Request.Method.POST,
+                    url,
+                    jsonRootObject,
+                    new Response.Listener<JSONArray>() {
+                        @Override
+                        public void onResponse(JSONArray response) {
+                            parseJSON(response);
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            if (error instanceof TimeoutError || error instanceof NoConnectionError) {
+                                Toast.makeText(ActDestallMaps.this, "Error de tiempo de espera", Toast.LENGTH_LONG).show();
+                            } else if (error instanceof AuthFailureError) {
+                                Toast.makeText(ActDestallMaps.this, "Error Servidor",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof ServerError) {
+                                Toast.makeText(ActDestallMaps.this, "Server Error",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof NetworkError) {
+                                Toast.makeText(ActDestallMaps.this, "Error de red",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof ParseError) {
+                                Toast.makeText(ActDestallMaps.this, "Error al serializar los datos",Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    headers.put("Content-Type", "application/json; charset=utf-8");
+                    return headers;
+                }
+            };
+
+            requestQueue.add(jsArrayRequest);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void parseJSON(JSONArray json) {
+
+        try {
+            Gson gson = new Gson();
+            if (json == null || json.equals("")){
+                Toast.makeText(this, "Problemas al recuperar la información", Toast.LENGTH_SHORT).show();
+            }else {
+                loginResponse = gson.fromJson(String.valueOf(json), ListCensu.class);
+                if (loginResponse.size() > 0) {
+                    censoLayer = new ArrayList<>();
+                    for (int i = 0; i < loginResponse.size(); i++) {
+                        censoLayer.add(new MarkerOptions().position(new LatLng(loginResponse.get(i).getLatitude(), loginResponse.get(i).getLongitude()))
+                                .snippet("Censo")
+                                .title(loginResponse.get(i).getDescriptionLine1())
+                                .anchor(0.5f, 0.5f)
+                                .flat(true)
+                                .visible(true)
+                                .draggable(false));
+                    }
+                }
+            }
+
+        }catch (IllegalStateException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @Override
@@ -279,8 +382,10 @@ public class ActDestallMaps extends AppCompatActivity implements GoogleApiClient
     }
 
     private void addAllMarkers() {
-        for (MarkerOptions marker : censoLayer) {
-            mMap.addMarker(marker);
+        if (censoLayer != null){
+            for (MarkerOptions marker : censoLayer) {
+                mMap.addMarker(marker);
+            }
         }
     }
 }

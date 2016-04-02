@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,7 +12,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -26,6 +26,17 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.ParseError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.ServerError;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -39,23 +50,38 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.gson.Gson;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import censo.dito.co.censo.Activities.ActDatosCensoF;
 import censo.dito.co.censo.Activities.ActEstadisticas;
+import censo.dito.co.censo.Activities.AvtivityBase;
 import censo.dito.co.censo.Adapters.DrawerItemAdapter;
 import censo.dito.co.censo.DataBase.DBHelper;
+import censo.dito.co.censo.Entity.Censu;
 import censo.dito.co.censo.Entity.DrawerItem;
 import censo.dito.co.censo.Entity.DrawerMenu;
+import censo.dito.co.censo.Entity.ListCensu;
 import censo.dito.co.censo.Fragments.FragmentCenso;
 import censo.dito.co.censo.Fragments.FragmentCensoData;
 import censo.dito.co.censo.Fragments.FragmentRoute;
 import censo.dito.co.censo.Fragments.FragmentSettings;
+import censo.dito.co.censo.Services.ServiceCoodenadas;
+import censo.dito.co.censo.Services.ServiceInsertSegui;
+import censo.dito.co.censo.Services.ServiceSeguimiento;
 
-public class MapMain extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
+import static censo.dito.co.censo.Entity.LoginResponse.getLoginRequest;
+
+public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener{
 
     private Toolbar toolbar;
@@ -81,6 +107,10 @@ public class MapMain extends AppCompatActivity implements GoogleApiClient.Connec
     private CheckBox censoChk;
     private CheckBox seguimientoChk;
     private LinearLayout linearLayout;
+    List<Censu> loginResponse;
+    Intent intentMemoryService;
+    Intent intentServiceSeguimiento;
+    Intent intentServiceCenso;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,10 +118,25 @@ public class MapMain extends AppCompatActivity implements GoogleApiClient.Connec
         setContentView(R.layout.layout_main);
         linearLayout = (LinearLayout) findViewById(R.id.linearLayoutPrincipal);
 
+        //Iniciamos el servicio de captura de coodenadas
+        //startService(new Intent(this, ServiceCoodenadas.class));
+        //startService(new Intent(this, ServiceSeguimiento.class));
+        intentMemoryService = new Intent(getApplicationContext(), ServiceInsertSegui.class);
+        startService(intentMemoryService);
+
+        intentServiceSeguimiento = new Intent(getApplicationContext(), ServiceSeguimiento.class);
+        startService(intentServiceSeguimiento);
+
+        intentServiceCenso = new Intent(getApplicationContext(), ServiceCoodenadas.class);
+        startService(intentServiceCenso);
+
+
         maps = findViewById(R.id.mapView);
         FrameLayout pages = (FrameLayout) findViewById(R.id.pages);
 
         myDB = new DBHelper(this);
+
+        getCensoPoint();
 
         toolbar = (Toolbar) findViewById(R.id.app_bar);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -149,16 +194,18 @@ public class MapMain extends AppCompatActivity implements GoogleApiClient.Connec
         addMapLayout();
 
         //Ruta
-        /*List<MapPoint> mapPoints = myDB.getMapPoint(myDB.idRuta());
-        if (mapPoints.size() > 0) {
+        /*List<MapPoint> mapPoints = myDB.getMapPoint(myDB.idRuta());*/
+
+        if (getLoginRequest().getUser().getActiveRoute() != null) {
+
             regionLayer = new PolygonOptions();
             regionLayer.strokeWidth(5).strokeColor(Color.argb(20, 50, 0, 255)).fillColor(Color.argb(20, 50, 0, 255));
 
-            for (int i = 0; i < mapPoints.size(); i++) {
-                regionLayer.add(new LatLng(mapPoints.get(i).get_latitud(), mapPoints.get(i).get_longitud()));
+            for (int i = 0; i < getLoginRequest().getUser().getActiveRoute().getMap().size(); i++) {
+                regionLayer.add(new LatLng(getLoginRequest().getUser().getActiveRoute().getMap().get(i).getLatitude(), getLoginRequest().getUser().getActiveRoute().getMap().get(i).getLongitude()));
             }
 
-            LatLng ltl = new LatLng(mapPoints.get(0).get_latitud(), mapPoints.get(0).get_longitud());
+            LatLng ltl = new LatLng(getLoginRequest().getUser().getActiveRoute().getMap().get(0).getLongitude(), getLoginRequest().getUser().getActiveRoute().getMap().get(0).getLongitude());
 
             regionLayer.add(ltl);
             mMap.addPolygon(regionLayer);
@@ -170,39 +217,31 @@ public class MapMain extends AppCompatActivity implements GoogleApiClient.Connec
 
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-        }*/
+        }
 
         //Seguimiento.
         /*List<DetalleRuta> pointDetalle = myDB.getDetalleRuta(myDB.idRuta());
-        if (pointDetalle.size() > 0) {
+        */
+
+        if (getLoginRequest().getUser().getActiveRoute() != null) {
             lineSeguimiento = new PolylineOptions();
             lineSeguimiento.width(6).color(getResources().getColor(R.color.color_9));
 
-            for (int i = 0; i < pointDetalle.size(); i++) {
-                lineSeguimiento.add(new LatLng(pointDetalle.get(i).get_latitud(), pointDetalle.get(i).get_longitud()));
+            for (int i = 0; i < getLoginRequest().getUser().getActiveRoute().getTrackingDetail().size(); i++) {
+                lineSeguimiento.add(new LatLng(getLoginRequest().getUser().getActiveRoute().getTrackingDetail().get(i).getLatitude(), getLoginRequest().getUser().getActiveRoute().getTrackingDetail().get(i).getLongitude()));
             }
         }
 
         //Censo.
         /*List<Censo> pointCenso = myDB.getCensoRuta(myDB.idRuta());
-        if (pointCenso.size() > 0) {
-            censoLayer = new ArrayList<>();
-            for (int i = 0; i < pointCenso.size(); i++) {
-                censoLayer.add(new MarkerOptions().position(new LatLng(pointCenso.get(i).get_latitud(), pointCenso.get(i).get_longitud()))
-                        .snippet(pointCenso.get(i).get_tiempocenso())
-                        .anchor(0.5f, 0.5f)
-                        .flat(true)
-                        .visible(true)
-                        .draggable(false));
-            }
-        }
+        */
 
         rutaChk = (CheckBox)findViewById(R.id.checRuta);
         rutaChk.setOnClickListener(this);
         censoChk = (CheckBox)findViewById(R.id.checCenso);
         censoChk.setOnClickListener(this);
         seguimientoChk = (CheckBox)findViewById(R.id.checSeguimiento);
-        seguimientoChk.setOnClickListener(this);*/
+        seguimientoChk.setOnClickListener(this);
 
     }
 
@@ -223,6 +262,88 @@ public class MapMain extends AppCompatActivity implements GoogleApiClient.Connec
             }
         }
         //PaintWalkMap
+    }
+
+    public void getCensoPoint() {
+
+        String url = String.format("%1$s%2$s", "http://181.143.94.74:2080/dito/services/zenso/ZensoAdministration.svc/", "GetCensuData");
+        requestQueue = Volley.newRequestQueue(this);
+
+        try {
+
+            HashMap<String, Object> postParameters = new HashMap<String, Object>();
+            postParameters.put("userId", getLoginRequest().getUser().getId());
+            postParameters.put("routeId", myDB.idRuta());
+
+            String jsonParameters = new Gson().toJson(postParameters);
+            JSONObject jsonRootObject = new JSONObject(jsonParameters);
+
+            JsonArrayRequest jsArrayRequest = new JsonArrayRequest(
+                    Request.Method.POST,
+                    url,
+                    jsonRootObject,
+                    new Response.Listener<JSONArray>() {
+                        @Override
+                        public void onResponse(JSONArray response) {
+                            parseJSON(response);
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            if (error instanceof TimeoutError || error instanceof NoConnectionError) {
+                                Toast.makeText(MapMain.this, "Error de tiempo de espera",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof AuthFailureError) {
+                                Toast.makeText(MapMain.this, "Error Servidor",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof ServerError) {
+                                Toast.makeText(MapMain.this, "Server Error",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof NetworkError) {
+                                Toast.makeText(MapMain.this, "Error de red",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof ParseError) {
+                                Toast.makeText(MapMain.this, "Error al serializar los datos",Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    headers.put("Content-Type", "application/json; charset=utf-8");
+                    return headers;
+                }
+            };
+
+            requestQueue.add(jsArrayRequest);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void parseJSON(JSONArray json) {
+
+        try {
+            Gson gson = new Gson();
+            if (json == null || json.equals("")){
+                Toast.makeText(this, "Problemas al recuperar la información", Toast.LENGTH_SHORT).show();
+            }else {
+                loginResponse = gson.fromJson(String.valueOf(json), ListCensu.class);
+                if (loginResponse.size() > 0) {
+                    censoLayer = new ArrayList<>();
+                    for (int i = 0; i < loginResponse.size(); i++) {
+                        censoLayer.add(new MarkerOptions().position(new LatLng(loginResponse.get(i).getLatitude(), loginResponse.get(i).getLongitude()))
+                                .snippet("Censo")
+                                .title(loginResponse.get(i).getDescriptionLine1())
+                                .anchor(0.5f, 0.5f)
+                                .flat(true)
+                                .visible(true)
+                                .draggable(false));
+                    }
+                }
+            }
+
+        }catch (IllegalStateException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @Override
@@ -328,6 +449,10 @@ public class MapMain extends AppCompatActivity implements GoogleApiClient.Connec
                     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
                     @Override
                     public void onPositive(MaterialDialog dialog) {
+                        //stopService(new Intent(MapMain.this, ServiceCoodenadas.class));
+                        stopService(intentMemoryService);
+                        stopService(intentServiceSeguimiento);
+                        stopService(intentServiceCenso);
                         finishAffinity();
                     }
 
@@ -413,12 +538,14 @@ public class MapMain extends AppCompatActivity implements GoogleApiClient.Connec
     }
 
     private void addAllMarkers() {
-        for (MarkerOptions marker : censoLayer) {
-            mMap.addMarker(marker);
+        if (censoLayer != null){
+            for (MarkerOptions marker : censoLayer) {
+                mMap.addMarker(marker);
+            }
         }
     }
 
-    private void ValidateMapLayers(boolean RegionLayerVisible, boolean CensoLayerVisible, boolean SeguiLayerVisible){
+    private void ValidateMapLayers(boolean RegionLayerVisible, boolean CensoLayerVisible, boolean SeguiLayerVisible) {
         mMap.clear();
 
         if (RegionLayerVisible)
@@ -427,8 +554,12 @@ public class MapMain extends AppCompatActivity implements GoogleApiClient.Connec
         if (CensoLayerVisible)
             addAllMarkers();
 
-        if (SeguiLayerVisible)
-            mMap.addPolyline(lineSeguimiento);
+        if (SeguiLayerVisible){
+            if (lineSeguimiento != null)
+                mMap.addPolyline(lineSeguimiento);
+        }
+
+
     }
 
     @Override

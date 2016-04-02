@@ -15,6 +15,9 @@ public class LoginResponse {
     @SerializedName("AuthenticatedErrorMsg")
     private String AuthenticatedErrorMsg;
 
+    @SerializedName("ActiveRoute")
+    private Route ActiveRoute;
+
     @SerializedName("Routes")
     private List<Route> Routes;
 
@@ -58,6 +61,14 @@ public class LoginResponse {
 
     public void setRoutes(List<Route> routes) {
         Routes = routes;
+    }
+
+    public Route getActiveRoute() {
+        return ActiveRoute;
+    }
+
+    public void setActiveRoute(Route activeRoute) {
+        ActiveRoute = activeRoute;
     }
 
 }
