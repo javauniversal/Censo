@@ -2,10 +2,11 @@ package censo.dito.co.censo;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.location.Location;
+import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -75,11 +76,8 @@ import censo.dito.co.censo.Fragments.FragmentCenso;
 import censo.dito.co.censo.Fragments.FragmentCensoData;
 import censo.dito.co.censo.Fragments.FragmentRoute;
 import censo.dito.co.censo.Fragments.FragmentSettings;
-import censo.dito.co.censo.Services.ServiceCoodenadas;
-import censo.dito.co.censo.Services.ServiceInsertSegui;
-import censo.dito.co.censo.Services.ServiceSeguimiento;
-
-import static censo.dito.co.censo.Entity.LoginResponse.getLoginRequest;
+import censo.dito.co.censo.Services.ReceiverBroadcastReceiver;
+import censo.dito.co.censo.Services.ServiceInsertTracing;
 
 public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener{
@@ -118,21 +116,22 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
         setContentView(R.layout.layout_main);
         linearLayout = (LinearLayout) findViewById(R.id.linearLayoutPrincipal);
 
-        //Iniciamos el servicio de captura de coodenadas
-        //startService(new Intent(this, ServiceCoodenadas.class));
-        //startService(new Intent(this, ServiceSeguimiento.class));
-        intentMemoryService = new Intent(getApplicationContext(), ServiceInsertSegui.class);
+        registerReceiver(new ReceiverBroadcastReceiver(), new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+
+        intentMemoryService = new Intent(getApplicationContext(), ServiceInsertTracing.class);
         startService(intentMemoryService);
-
-        intentServiceSeguimiento = new Intent(getApplicationContext(), ServiceSeguimiento.class);
-        startService(intentServiceSeguimiento);
-
-        intentServiceCenso = new Intent(getApplicationContext(), ServiceCoodenadas.class);
-        startService(intentServiceCenso);
-
 
         maps = findViewById(R.id.mapView);
         FrameLayout pages = (FrameLayout) findViewById(R.id.pages);
+
+        //intentServiceSeguimiento = new Intent(getApplicationContext(), ServiceSeguimiento.class);
+        //startService(intentServiceSeguimiento);
+
+        //intentServiceCenso = new Intent(getApplicationContext(), ServiceCoodenadas.class);
+        //startService(intentServiceCenso);
+
+
+
 
         myDB = new DBHelper(this);
 
@@ -196,7 +195,7 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
         //Ruta
         /*List<MapPoint> mapPoints = myDB.getMapPoint(myDB.idRuta());*/
 
-        if (getLoginRequest().getUser().getActiveRoute() != null) {
+        /*if (getLoginRequest().getUser().getActiveRoute() != null) {
 
             regionLayer = new PolygonOptions();
             regionLayer.strokeWidth(5).strokeColor(Color.argb(20, 50, 0, 255)).fillColor(Color.argb(20, 50, 0, 255));
@@ -205,7 +204,7 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
                 regionLayer.add(new LatLng(getLoginRequest().getUser().getActiveRoute().getMap().get(i).getLatitude(), getLoginRequest().getUser().getActiveRoute().getMap().get(i).getLongitude()));
             }
 
-            LatLng ltl = new LatLng(getLoginRequest().getUser().getActiveRoute().getMap().get(0).getLongitude(), getLoginRequest().getUser().getActiveRoute().getMap().get(0).getLongitude());
+            LatLng ltl = new LatLng(getLoginRequest().getUser().getActiveRoute().getMap().get(0).getLatitude(), getLoginRequest().getUser().getActiveRoute().getMap().get(0).getLongitude());
 
             regionLayer.add(ltl);
             mMap.addPolygon(regionLayer);
@@ -220,8 +219,8 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
         }
 
         //Seguimiento.
-        /*List<DetalleRuta> pointDetalle = myDB.getDetalleRuta(myDB.idRuta());
-        */
+        List<DetalleRuta> pointDetalle = myDB.getDetalleRuta(myDB.idRuta());
+
 
         if (getLoginRequest().getUser().getActiveRoute() != null) {
             lineSeguimiento = new PolylineOptions();
@@ -230,7 +229,7 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
             for (int i = 0; i < getLoginRequest().getUser().getActiveRoute().getTrackingDetail().size(); i++) {
                 lineSeguimiento.add(new LatLng(getLoginRequest().getUser().getActiveRoute().getTrackingDetail().get(i).getLatitude(), getLoginRequest().getUser().getActiveRoute().getTrackingDetail().get(i).getLongitude()));
             }
-        }
+        }*/
 
         //Censo.
         /*List<Censo> pointCenso = myDB.getCensoRuta(myDB.idRuta());
@@ -272,7 +271,7 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
         try {
 
             HashMap<String, Object> postParameters = new HashMap<String, Object>();
-            postParameters.put("userId", getLoginRequest().getUser().getId());
+            postParameters.put("userId", myDB.seletUser().getUserId());
             postParameters.put("routeId", myDB.idRuta());
 
             String jsonParameters = new Gson().toJson(postParameters);
@@ -450,9 +449,9 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
                     @Override
                     public void onPositive(MaterialDialog dialog) {
                         //stopService(new Intent(MapMain.this, ServiceCoodenadas.class));
-                        stopService(intentMemoryService);
-                        stopService(intentServiceSeguimiento);
-                        stopService(intentServiceCenso);
+                        //stopService(intentMemoryService);
+                        //stopService(intentServiceSeguimiento);
+                        //stopService(intentServiceCenso);
                         finishAffinity();
                     }
 

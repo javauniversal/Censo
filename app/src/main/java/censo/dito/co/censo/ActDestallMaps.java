@@ -5,7 +5,6 @@ import android.content.IntentSender;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -58,7 +57,6 @@ import censo.dito.co.censo.Entity.ListCensu;
 import censo.dito.co.censo.Entity.RouteMapPoint;
 import censo.dito.co.censo.Entity.TracePoint;
 
-import static censo.dito.co.censo.Entity.LoginResponse.getLoginRequest;
 
 public class ActDestallMaps extends AvtivityBase implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener {
 
@@ -205,7 +203,7 @@ public class ActDestallMaps extends AvtivityBase implements GoogleApiClient.Conn
         try {
 
             HashMap<String, Object> postParameters = new HashMap<String, Object>();
-            postParameters.put("userId", getLoginRequest().getUser().getId());
+            //postParameters.put("userId", getLoginRequest().getUser().getId());
             postParameters.put("routeId", bundle.getInt("idRuta"));
 
             String jsonParameters = new Gson().toJson(postParameters);

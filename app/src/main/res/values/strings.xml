@@ -39,17 +39,36 @@
     <string name="texto_fin">Fin</string>
 
     <!-- QUERYS SQLITE -->
-    <string name="query_ruta">CREATE TABLE Ruta (id integer int, nombreRuta TEXT, fechainicial DATETIME, fechafinal DATETIME, estadoruta int)</string>
-    <string name="query_censo">CREATE TABLE Censo (id integer primary key AUTOINCREMENT, idRuta INT,  tiempocenso DATETIME, latitud REAL, longitud REAL, censodata TEXT)</string>
-    <string name="query_detalleRuta">CREATE TABLE DetalleRuta (id integer primary key AUTOINCREMENT, idRuta INT, tiemposeguimiento DATETIME, latitud REAL, longitud REAL)</string>
-    <string name="query_mapPoint">CREATE TABLE MapPoint (id integer primary key AUTOINCREMENT, orden INT, idRuta INT, latitud REAL, longitud REAL)</string>
-    <string name="query_configuracionbase">CREATE TABLE ConfiguracionApp (id integer primary key AUTOINCREMENT, urlBase TEXT, intervalBase INT)</string>
-    <string name="query_censodd">CREATE TABLE censoDb (id integer primary key AUTOINCREMENT, userid INT, datatime TEXT, latitud double, longitud double, data TEXT, companycode TEXT, routeid INT)</string>
+    <string name="query_user">CREATE TABLE user (id integer primary key AUTOINCREMENT, Id_ INT, UserId TEXT, FullName TEXT, password TEXT, PhotoURL TEXT)</string>
 
-    <string name="query_seguimiento">CREATE TABLE seguimiento (id integer primary key AUTOINCREMENT, userid INT, ruteid INT, fecha TEXT, latitud double, longitud double)</string>
+    <string name="query_route_active">CREATE TABLE route_active (id integer primary key AUTOINCREMENT, Idrouteactive INT, name TEXT, Description TEXT, Start TEXT, End TEXT, State TEXT, StrucDataEntry TEXT)</string>
+
+    <string name="query_route_map_point_active">CREATE TABLE route_mappoint_active (id integer primary key AUTOINCREMENT, orden INT, id_orden TEXT, latitude REAL, longitude REAL)</string>
+
+    <string name="query_trace_point_active">CREATE TABLE trace_point_active (id integer primary key AUTOINCREMENT, date_time TEXT, id_route INT, latitude REAL, longitude REAL)</string>
+
+    <string name="query_rutas">CREATE TABLE Ruta (id integer int, nombreRuta TEXT, fechainicial DATETIME, fechafinal DATETIME, estadoruta int)</string>
 
     <string name="query_tracking">CREATE TABLE tracking (id integer primary key AUTOINCREMENT, idRuta INT, latitud REAL, longitud REAL, datetime TEXT)</string>
 
+    <string name="query_mapPoint">CREATE TABLE MapPoint (id integer primary key AUTOINCREMENT, orden INT, idRuta INT, latitud REAL, longitud REAL)</string>
+
+    <string name="query_seguimiento">CREATE TABLE seguimiento (id integer primary key AUTOINCREMENT, userid INT, ruteid INT, fecha TEXT, latitud double, longitud double)</string>
+
+    <string name="query_censodd">CREATE TABLE censobb (id integer primary key AUTOINCREMENT, userid INT, datatime TEXT, latitud double, longitud double, data TEXT, companycode TEXT, routeid INT)</string>
+
+    <!--
+    <string name="query_user">CREATE TABLE usuariobd (id integer primary key AUTOINCREMENT, Id INT, UserId TEXT, FullName TEXT, PhotoURL TEXT)</string>
+
+
+    <string name="query_censo">CREATE TABLE Censo (id integer primary key AUTOINCREMENT, idRuta INT,  tiempocenso DATETIME, latitud REAL, longitud REAL, censodata TEXT)</string>
+    <string name="query_detalleRuta">CREATE TABLE DetalleRuta (id integer primary key AUTOINCREMENT, idRuta INT, tiemposeguimiento DATETIME, latitud REAL, longitud REAL)</string>
+
+    <string name="query_configuracionbase">CREATE TABLE ConfiguracionApp (id integer primary key AUTOINCREMENT, urlBase TEXT, intervalBase INT)</string>
+
+
+
+    -->
 
     <string name="title_activity_act_destall_maps">Detalle en el mapa</string>
 

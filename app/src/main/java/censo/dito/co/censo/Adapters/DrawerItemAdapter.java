@@ -80,10 +80,10 @@ public class DrawerItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                     }
                 };
 
-                imageLoader1.displayImage(LoginResponse.getLoginRequest().getUser().getPhotoURL(), profileImage, options1, listener);
+                //imageLoader1.displayImage(LoginResponse.getLoginRequest().getUser().getPhotoURL(), profileImage, options1, listener);
 
                 TextView numberUser = (TextView) headerRootView.findViewById(R.id.txtNumberUser);
-                numberUser.setText(LoginResponse.getLoginRequest().getUser().getFullName());
+                //numberUser.setText(LoginResponse.getLoginRequest().getUser().getFullName());
                 return new HeaderViewHolder(headerRootView);
             case DIVIDER:
                 View dividerRootView = LayoutInflater.from(parent.getContext()).inflate(R.layout.drawer_divider, parent, false);

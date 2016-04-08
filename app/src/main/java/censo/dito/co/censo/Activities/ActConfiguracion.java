@@ -47,10 +47,12 @@ public class ActConfiguracion extends AppCompatActivity implements View.OnClickL
         intervalBase = (MaterialEditText) findViewById(R.id.txtInterval);
 
         Configuracion configuracion = mydb.getConfiguracion();
-        if(configuracion != null){
+        //if(configuracion != null){
+            //urlBase.setText(configuracion.getUrl());
             urlBase.setText(configuracion.getUrl());
+            //intervalBase.setText(configuracion.getInterval()+"");
             intervalBase.setText(configuracion.getInterval()+"");
-        }
+        //}
 
         btnConfiguracion = (ButtonRectangle) findViewById(R.id.btnCon);
         btnConfiguracion.setOnClickListener(this);

@@ -22,8 +22,6 @@ import censo.dito.co.censo.Entity.ListCensu;
 import censo.dito.co.censo.R;
 import censo.dito.co.censo.Services.ServiceData;
 
-import static censo.dito.co.censo.Entity.LoginResponse.getLoginRequest;
-
 public class FragmentCensoData extends Fragment {
 
     private SwipeMenuListView mListView = null;
@@ -70,7 +68,7 @@ public class FragmentCensoData extends Fragment {
     private void servicesCensoData(){
 
         HashMap<String, Object> postParameters = new HashMap<String, Object>();
-        postParameters.put("userId", getLoginRequest().getUser().getId());
+        //postParameters.put("userId", getLoginRequest().getUser().getId());
         postParameters.put("routeId", mParam1);
         String jsonParameters = new Gson().toJson(postParameters);
 

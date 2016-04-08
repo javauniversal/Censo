@@ -20,6 +20,18 @@ public class User {
     @SerializedName("ActiveRoute")
     private Route ActiveRoute;
 
+    private String password;
+
+
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public int getId() {
         return Id;
     }

@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -75,10 +77,9 @@
 
         <receiver
             android:name=".Services.ReceiverBroadcastReceiver"
-            android:enabled="true"
-            android:exported="true">
+            android:label="ReceiverBroadcastReceiver">
             <intent-filter>
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
 
@@ -87,9 +88,12 @@
             android:enabled="true"
             android:exported="true" />
         <service
-            android:name=".Services.ServiceInsertSegui"
+            android:name=".Services.ServiceInsertTracing"
             android:enabled="true"
             android:exported="true" />
+        <service
+            android:name=".Services.IntentServiceSeguimiento"
+            android:exported="false"></service>
     </application>
 
 </manifest>

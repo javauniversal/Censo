@@ -64,12 +64,13 @@ public class ServiceSeguimiento extends Service {
                         saveJsonService(jsonParameters, seguimientoList.get(i).getUser_id(), seguimientoList.get(i).getRute_id());
                     }
                 }
+
             }
         };
 
-        timer.scheduleAtFixedRate(timerTask, 0, 1200000);
+        timer.scheduleAtFixedRate(timerTask, 0, 300000);
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     private void saveJsonService(String jsonRootObject, int user_id, int rute_id) {

@@ -2,7 +2,6 @@ package censo.dito.co.censo.Activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.view.View;
 import android.widget.EditText;
@@ -30,15 +29,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import censo.dito.co.censo.DataBase.DBHelper;
-import censo.dito.co.censo.Entity.Configuracion;
 import censo.dito.co.censo.Entity.LoginRequest;
 import censo.dito.co.censo.Entity.LoginResponse;
+import censo.dito.co.censo.Entity.Route;
 import censo.dito.co.censo.MapMain;
 import censo.dito.co.censo.R;
-import censo.dito.co.censo.Services.ServiceData;
-import censo.dito.co.censo.Services.ServiceInsertSegui;
-
-import static censo.dito.co.censo.Entity.LoginResponse.setLoginRequest;
 
 public class ActLogin extends AvtivityBase implements View.OnClickListener {
 
@@ -47,6 +42,7 @@ public class ActLogin extends AvtivityBase implements View.OnClickListener {
     private EditText password;
     private DBHelper mydb;
     private TextView configuarion;
+    private Route route = new Route();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,25 +67,6 @@ public class ActLogin extends AvtivityBase implements View.OnClickListener {
         ButtonRectangle login = (ButtonRectangle) findViewById(R.id.login);
         login.setOnClickListener(this);
     }
-
-    /*public void PostClick() {
-
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setCiaId(codeCompany.getText().toString());
-        loginRequest.setUser(codeUser.getText().toString());
-        loginRequest.setPassword(password.getText().toString());
-
-        HashMap<String, Object> postParameters = new HashMap<>();
-        postParameters.put("CiaId", loginRequest.getCiaId());
-        postParameters.put("User", loginRequest.getUser());
-        postParameters.put("Password", loginRequest.getPassword());
-        String jsonParameters = new Gson().toJson(postParameters);
-
-        ServiceData serviceData = new ServiceData(this, String.format("%1$s%2$s", getString(R.string.url_authentication), "Login"), jsonParameters);
-        serviceData.PostClick();
-        parseJSON(serviceData.dataServices);
-
-    }*/
 
     public void validateNegocio(){
 
@@ -158,24 +135,20 @@ public class ActLogin extends AvtivityBase implements View.OnClickListener {
         try {
             Gson gson = new Gson();
 
-            if (json == null || json.equals("")){
+            if (json == null || json.equals("")) {
                 Toast.makeText(this, "Problemas al recuperar la información", Toast.LENGTH_SHORT).show();
-            }else {
+            } else {
                 LoginResponse loginResponse = gson.fromJson(String.valueOf(json), LoginResponse.class);
-                setLoginRequest(loginResponse);
 
                 if(loginResponse.isAuthenticated()){
-                    //Insert Data Base.
-                    mydb.deleteRuta();
 
-                    if (mydb.insertRuta(loginResponse)){
+                    loginResponse.getUser().setPassword(password.getText().toString());
+
+                    if (mydb.insertUser(loginResponse.getUser()) && mydb.insertRouteActive(loginResponse.getUser().getActiveRoute()) && mydb.insertRuta(loginResponse)) {
                         startActivity(new Intent(ActLogin.this, MapMain.class));
                         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-
-                        //startService(new Intent(this, ServiceInsertSegui.class));
-
                         finish();
-                    }else{
+                    } else {
                         Toast.makeText(this, "Problemas al guardar La primera Ruta!", Toast.LENGTH_SHORT).show();
                     }
                 }else{
@@ -197,8 +170,8 @@ public class ActLogin extends AvtivityBase implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.login:
-                Configuracion configuracion = mydb.getConfiguracion();
-                if(configuracion != null){
+                //Configuracion configuracion = mydb.getConfiguracion();
+                //if(configuracion != null){
                     if (isValidNumber(codeCompany.getText().toString())) {
                         codeCompany.setError(getResources().getString(R.string.validate_company));
                         codeCompany.setFocusableInTouchMode(true);
@@ -212,11 +185,27 @@ public class ActLogin extends AvtivityBase implements View.OnClickListener {
                         password.setFocusableInTouchMode(true);
                         password.requestFocus();
                     } else {
-                        validateNegocio();
+
+                        route = mydb.seletRouteActive();
+                        if (route.getName() != null) {
+                            // HAY datos
+
+                            if (password.getText().toString().equals(mydb.seletUser().getPassword())){
+                                //Ingreso.
+                                startActivity(new Intent(ActLogin.this, MapMain.class));
+                                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                                finish();
+                            } else {
+                                Toast.makeText(this, "Usuario/Password incorrecto", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            // NO hay datos
+                            validateNegocio();
+                        }
                     }
-                }else{
-                    Toast.makeText(this, "La aplicación no esta configurada!", Toast.LENGTH_SHORT).show();
-                }
+                //}else{
+                  //  Toast.makeText(this, "La aplicación no esta configurada!", Toast.LENGTH_SHORT).show();
+               // }
 
                 break;
             case R.id.txtConfiguracion:

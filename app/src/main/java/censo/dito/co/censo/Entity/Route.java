@@ -24,14 +24,16 @@ public class Route {
     @SerializedName("State")
     private int State;
 
+    @SerializedName("StrucDataEntry")
+    private String StrucDataEntry;
+
     @SerializedName("Map")
     private List<RouteMapPoint> Map;
 
     @SerializedName("TrackingDetail")
     private List<TracePoint> TrackingDetail;
 
-    @SerializedName("StrucDataEntry")
-    private String StrucDataEntry;
+
 
     public int getId() {
         return Id;

@@ -1,9 +1,13 @@
 package censo.dito.co.censo.Fragments;
 
-import android.content.Intent;
+import android.annotation.TargetApi;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.InputFilter;
 import android.text.InputType;
+import android.text.Spanned;
+import android.text.method.DigitsKeyListener;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,18 +34,18 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.StringTokenizer;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import censo.dito.co.censo.Activities.EditTextRequired;
 import censo.dito.co.censo.DataBase.DBHelper;
 import censo.dito.co.censo.Entity.CensuPointDataRequest;
 import censo.dito.co.censo.Entity.LoginResponse;
 import censo.dito.co.censo.Entity.Route;
-import censo.dito.co.censo.Entity.ShippingForm;
 import censo.dito.co.censo.Entity.TracePoint;
-import censo.dito.co.censo.MapMain;
 import censo.dito.co.censo.R;
 import censo.dito.co.censo.Services.ConnectionDetector;
 import censo.dito.co.censo.Services.ServiceData;
@@ -83,17 +87,18 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
         cargarFormulario();
     }
 
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     public void cargarFormulario(){
 
         cd = new ConnectionDetector(getActivity());
         ll = (LinearLayout) getActivity().findViewById(R.id.linearLayout2);
         route = new Route();
-        for(int i = 0; i < LoginResponse.getLoginRequest().getRoutes().size(); i++){
+        /*for(int i = 0; i < LoginResponse.getLoginRequest().getRoutes().size(); i++){
             if(LoginResponse.getLoginRequest().getRoutes().get(i).getState() == 2){
                 route.setStrucDataEntry(LoginResponse.getLoginRequest().getRoutes().get(i).getStrucDataEntry());
                 break;
             }
-        }
+        }*/
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -122,17 +127,73 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
                         tve.setId(Integer.parseInt(eElement.getAttribute("id")));
                         ll.addView(tve);
 
-                        EditText et = new EditText(getActivity());
-                        et.setInputType(InputType.TYPE_CLASS_TEXT);
+                        EditTextRequired et = new EditTextRequired(getActivity());
+                        et.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
                         et.setHint(eElement.getAttribute("c"));
+                        et.setFilters(new InputFilter[]{
+                                new InputFilter() {
+                                    public CharSequence filter(CharSequence src, int start, int end, Spanned dst, int dstart, int dend) {
+
+                                        if (src.equals("")) { // for backspace
+                                            return src;
+                                        }
+                                        if (src.toString().matches("[a-zA-Z0-9 ]*")) //put your constraints here
+                                        {
+                                            return src;
+                                        }
+                                        return "";
+                                    }
+                                }
+                        });
                         et.setId(Integer.parseInt(eElement.getAttribute("id")));
+                        et.setIsRequire(Objects.equals(eElement.getAttribute("o"), "1"));
                         ll.addView(et);
+                    }
+
+                    // Edit Texto Largo.
+                    if (eElement.getAttribute("t").equals("6")) {
+                        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        layoutParams.setMargins(0, 70, 0, 0);
+
+                        TextView tve = new TextView(getActivity());
+                        tve.setText(eElement.getAttribute("c"));
+                        tve.setLayoutParams(layoutParams);
+                        tve.setId(Integer.parseInt(eElement.getAttribute("id")));
+                        ll.addView(tve);
+
+                        EditTextRequired et = new EditTextRequired(getActivity());
+                        et.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+                        et.setHint(eElement.getAttribute("c"));
+                        et.setLines(3);
+                        et.setHorizontallyScrolling(false);
+                        et.setMinWidth(5);
+                        et.setFilters(new InputFilter[]{
+                                new InputFilter() {
+                                    public CharSequence filter(CharSequence src, int start, int end, Spanned dst, int dstart, int dend) {
+
+                                        if (src.equals("")) { // for backspace
+                                            return src;
+                                        }
+                                        if (src.toString().matches("[a-zA-Z0-9 ]*")) //put your constraints here
+                                        {
+                                            return src;
+                                        }
+                                        return "";
+                                    }
+                                }
+                        });
+                        et.setBackgroundResource(R.drawable.rounded_corner);
+                        et.setMaxWidth(10);
+                        et.setId(Integer.parseInt(eElement.getAttribute("id")));
+                        et.setIsRequire(Objects.equals(eElement.getAttribute("o"), "1"));
+                        ll.addView(et);
+
                     }
 
                     //Selecte checkboxes
                     if (eElement.getAttribute("t").equals("3")) {
 
-                        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         layoutParams.setMargins(0, 70, 0, 0);
 
                         //add checkboxes
@@ -149,6 +210,18 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
                             cb.setId(idCheckboxes + 1);
                             ll.addView(cb);
                             idCheckboxes++;
+                            cb.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    for (int i = 0; i < ll.getChildCount(); i++) {
+                                        View child = ll.getChildAt(i);
+                                        if (child instanceof CheckBox) {
+                                            CheckBox cb = (CheckBox) child;
+                                            cb.setError(null);
+                                        }
+                                    }
+                                }
+                            });
                         }
                     }
 
@@ -168,6 +241,7 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
                         etn.setHint(eElement.getAttribute("c"));
                         etn.setId(Integer.parseInt(eElement.getAttribute("id")));
                         ll.addView(etn);
+
                     }
 
                     //Spinner generador
@@ -211,6 +285,7 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     @Override
@@ -232,28 +307,46 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
 
     public void saveAnswers() {
         LinearLayout root = (LinearLayout) getActivity().findViewById(R.id.linearLayout2); //or whatever your root control is
+
         loopQuestions(root);
     }
 
+
     private void loopQuestions(ViewGroup parent) {
+
+        boolean bandera = true;
         String Productos = new String();
         String XmlData = new String();
         XmlData = "<f>";
+
         for(int i = 0; i < parent.getChildCount(); i++) {
             View child = parent.getChildAt(i);
 
-            if(child instanceof EditText) {
+            if(child instanceof EditTextRequired) {
                 //Support for EditText
-                EditText et = (EditText)child;
+                EditTextRequired et = (EditTextRequired)child;
+
+                if (et.isRequire() && et.getText().toString().equals("")){
+                    et.setFocusable(true);
+                    et.setFocusableInTouchMode(true);
+                    et.requestFocus();
+                    et.setError("Campo requerido");
+
+                    bandera = false;
+
+                    break;
+                }
+
                 XmlData = XmlData + "<e id=\""+et.getId()+"\"  t=\"2\" c=\""+ et.getHint() +"\"  v=\"" + et.getText() + "\" />";
 
-            }else if (child instanceof CheckBox){
+            } else if (child instanceof CheckBox) {
                 CheckBox cb = (CheckBox)child;
                 int answer = cb.isChecked() ? 1 : 0;
                 if (answer == 1){
                     Productos = ConcatProducts(Productos, cb.getText().toString());
                 }
-            }else if (child instanceof Spinner){
+
+            } else if (child instanceof Spinner){
                 Spinner spinner = (Spinner)child;
                 XmlData = XmlData + "<e id=\""+spinner.getTag()+"\" t=\"1\" c=\""+ spinner.getSelectedItem().toString() +"\" v=\"" + spinner.getSelectedItem().toString() + "\" />";
             }
@@ -262,15 +355,36 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
         XmlData = XmlData + "<e id=\""+11+"\" t=\"3\" c=\"Producto\" v=\"" + Productos + "\" />";
         XmlData = XmlData + "</f>";
 
-        guardarCensoData(XmlData);
+        if (bandera && validateCheckBox(parent)){
+            guardarCensoData(XmlData);
+        }
     }
+
+    public boolean validateCheckBox(ViewGroup parent){
+
+        for(int i = 0; i < parent.getChildCount(); i++) {
+            View child = parent.getChildAt(i);
+            if (child instanceof CheckBox) {
+                CheckBox cb = (CheckBox) child;
+                int answer = cb.isChecked() ? 1 : 0;
+                if (answer == 1) {
+                    return true;
+                }
+                //Toast.makeText(getActivity(), "Faltan campo requeridos por llenar", Toast.LENGTH_LONG).show();
+                cb.setError("");
+            }
+        }
+
+        return false;
+    }
+
 
     public void guardarCensoData(String xml){
 
         CensuPointDataRequest censuPointDataRequest = new CensuPointDataRequest();
         TracePoint tracePoint = new TracePoint();
         ServiceLocation serviceLocation = new ServiceLocation(getActivity());
-        censuPointDataRequest.setUserId(LoginResponse.getLoginRequest().getUser().getId());
+        //censuPointDataRequest.setUserId(LoginResponse.getLoginRequest().getUser().getId());
         censuPointDataRequest.setRouteId(1);
         censuPointDataRequest.setCompanyCode("001");
         censuPointDataRequest.setData(xml);
