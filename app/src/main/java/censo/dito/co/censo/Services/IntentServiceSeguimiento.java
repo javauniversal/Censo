@@ -32,7 +32,7 @@ public class IntentServiceSeguimiento extends IntentService {
             mydb = new DBHelper(getApplicationContext());
             List<Seguimiento> seguimientoList = mydb.getCensuSeguimiento();
             if (seguimientoList.size() > 0) {
-                Log.d(TAG, "Estoy enviando datos por el broadcast");
+
                 for (int i = 0; i < seguimientoList.size(); i++) {
                     HashMap<String, Object> postParameters = new HashMap<>();
                     postParameters.put("UserId", seguimientoList.get(i).getUser_id());

@@ -43,25 +43,16 @@ public class ServiceInsertTracing extends Service {
                 @Override
                 public void run() {
 
-                    HashMap<String, Object> postParameters = new HashMap<>();
-                    postParameters.put("UserId", mydb.seletUser().getId());
-                    postParameters.put("RouteId", mydb.idRuta());
-
                     Date pStart = new Date();
-                    List<TracePoint> tracePointList = new ArrayList<>();
-                    TracePoint tracePoint = new TracePoint();
-                    tracePoint.setDateTime("/Date(" + pStart.getTime() + "+0200)/");
-                    tracePoint.setIdRoute(mydb.idRuta());
-                    tracePoint.setLatitude(serviceLocation.getLatitude());
-                    tracePoint.setLongitude(serviceLocation.getLongitude());
-                    tracePointList.add(tracePoint);
-
-                    postParameters.put("Points", tracePointList);
-                    String jsonParameters = new Gson().toJson(postParameters);
-
-                    saveJsonServiceIntace(jsonParameters);
-
-                    Log.d(TAG, "LLamada del seguimiento cada minuto");
+                    Seguimiento seguimiento = new Seguimiento();
+                    seguimiento.setUser_id(mydb.seletUser().getId());
+                    seguimiento.setRute_id(mydb.idRuta());
+                    seguimiento.setFecha("/Date(" + pStart.getTime() + "+0200)/");
+                    seguimiento.setLatitud(serviceLocation.getLatitude());
+                    seguimiento.setLongitud(serviceLocation.getLongitude());
+                    mydb.insertSeguimiento(seguimiento);
+                    Log.d(TAG, "Insertando Datos Local: Usuario: " + mydb.seletUser().getId() +
+                            " Ruta: " + mydb.idRuta() +" Latitud: "+ serviceLocation.getLatitude()+ " Longitud;: "+serviceLocation.getLongitude());
 
                 }
             };
@@ -71,37 +62,6 @@ public class ServiceInsertTracing extends Service {
         }
 
         return START_STICKY;
-    }
-
-    private void saveJsonServiceIntace(String jsonParameters) {
-
-        ServiceData serviceData = new ServiceData(getApplicationContext(), String.format("%1$s%2$s", getString(R.string.url_administration), "SaveTrace"), jsonParameters);
-        serviceData.PostClick();
-        String datt = serviceData.dataServices;
-
-        if (datt == null) {
-            Date pStart = new Date();
-            Seguimiento seguimiento = new Seguimiento();
-            seguimiento.setUser_id(mydb.seletUser().getId());
-            seguimiento.setRute_id(mydb.idRuta());
-            seguimiento.setFecha("/Date(" + pStart.getTime() + "+0200)/");
-            seguimiento.setLatitud(serviceLocation.getLatitude());
-            seguimiento.setLongitud(serviceLocation.getLongitude());
-            mydb.insertSeguimiento(seguimiento);
-            Log.d(TAG, "Insert Data seguimiento no tiene internet");
-        } else {
-            if (!datt.equals("true")) {
-                Date pStart = new Date();
-                Seguimiento seguimiento = new Seguimiento();
-                seguimiento.setUser_id(mydb.seletUser().getId());
-                seguimiento.setRute_id(mydb.idRuta());
-                seguimiento.setFecha("/Date(" + pStart.getTime() + "+0200)/");
-                seguimiento.setLatitud(serviceLocation.getLatitude());
-                seguimiento.setLongitud(serviceLocation.getLongitude());
-                mydb.insertSeguimiento(seguimiento);
-                Log.d(TAG, "Insert Data seguimiento no tiene internet");
-            }
-        }
     }
 
     @Override

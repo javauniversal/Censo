@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.os.Build;
@@ -37,6 +38,7 @@ import com.android.volley.ServerError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -65,6 +67,7 @@ import java.util.Map;
 
 import censo.dito.co.censo.Activities.ActDatosCensoF;
 import censo.dito.co.censo.Activities.ActEstadisticas;
+import censo.dito.co.censo.Activities.ActLogin;
 import censo.dito.co.censo.Activities.AvtivityBase;
 import censo.dito.co.censo.Adapters.DrawerItemAdapter;
 import censo.dito.co.censo.DataBase.DBHelper;
@@ -72,12 +75,16 @@ import censo.dito.co.censo.Entity.Censu;
 import censo.dito.co.censo.Entity.DrawerItem;
 import censo.dito.co.censo.Entity.DrawerMenu;
 import censo.dito.co.censo.Entity.ListCensu;
+import censo.dito.co.censo.Entity.LoginRequest;
+import censo.dito.co.censo.Entity.LoginResponse;
+import censo.dito.co.censo.Entity.RouteMapPoint;
 import censo.dito.co.censo.Fragments.FragmentCenso;
 import censo.dito.co.censo.Fragments.FragmentCensoData;
 import censo.dito.co.censo.Fragments.FragmentRoute;
 import censo.dito.co.censo.Fragments.FragmentSettings;
 import censo.dito.co.censo.Services.ReceiverBroadcastReceiver;
 import censo.dito.co.censo.Services.ServiceInsertTracing;
+import censo.dito.co.censo.Services.ServiceSeguimiento;
 
 public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener{
@@ -106,9 +113,9 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
     private CheckBox seguimientoChk;
     private LinearLayout linearLayout;
     List<Censu> loginResponse;
-    Intent intentMemoryService;
-    Intent intentServiceSeguimiento;
-    Intent intentServiceCenso;
+    private Intent intentMemoryService;
+    private Intent intentServiceSeguimiento;
+    private Intent intentServiceCenso;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,26 +123,24 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
         setContentView(R.layout.layout_main);
         linearLayout = (LinearLayout) findViewById(R.id.linearLayoutPrincipal);
 
-        registerReceiver(new ReceiverBroadcastReceiver(), new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-
-        intentMemoryService = new Intent(getApplicationContext(), ServiceInsertTracing.class);
-        startService(intentMemoryService);
+        //registerReceiver(new ReceiverBroadcastReceiver(), new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
         maps = findViewById(R.id.mapView);
         FrameLayout pages = (FrameLayout) findViewById(R.id.pages);
 
-        //intentServiceSeguimiento = new Intent(getApplicationContext(), ServiceSeguimiento.class);
-        //startService(intentServiceSeguimiento);
-
         //intentServiceCenso = new Intent(getApplicationContext(), ServiceCoodenadas.class);
         //startService(intentServiceCenso);
 
-
-
-
         myDB = new DBHelper(this);
 
-        getCensoPoint();
+        if (!myDB.IntroPrimeraVes()){
+            myDB.insertIntroPrimeraVes("Primeraves");
+            intentMemoryService = new Intent(getApplicationContext(), ServiceInsertTracing.class);
+            startService(intentMemoryService);
+
+            intentServiceSeguimiento = new Intent(getApplicationContext(), ServiceSeguimiento.class);
+            startService(intentServiceSeguimiento);
+        }
 
         toolbar = (Toolbar) findViewById(R.id.app_bar);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -195,16 +200,18 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
         //Ruta
         /*List<MapPoint> mapPoints = myDB.getMapPoint(myDB.idRuta());*/
 
-        /*if (getLoginRequest().getUser().getActiveRoute() != null) {
+        if (myDB.seletRouteActive() != null) {
 
+            List<RouteMapPoint> routeMapPointList = myDB.seletRouteActive().getMap();
             regionLayer = new PolygonOptions();
             regionLayer.strokeWidth(5).strokeColor(Color.argb(20, 50, 0, 255)).fillColor(Color.argb(20, 50, 0, 255));
 
-            for (int i = 0; i < getLoginRequest().getUser().getActiveRoute().getMap().size(); i++) {
-                regionLayer.add(new LatLng(getLoginRequest().getUser().getActiveRoute().getMap().get(i).getLatitude(), getLoginRequest().getUser().getActiveRoute().getMap().get(i).getLongitude()));
+            for (int i = 0; i < routeMapPointList.size(); i++) {
+                regionLayer.add(new LatLng(routeMapPointList.get(i).getLatitude(),
+                        routeMapPointList.get(i).getLongitude()));
             }
 
-            LatLng ltl = new LatLng(getLoginRequest().getUser().getActiveRoute().getMap().get(0).getLatitude(), getLoginRequest().getUser().getActiveRoute().getMap().get(0).getLongitude());
+            LatLng ltl = new LatLng(routeMapPointList.get(0).getLatitude(), routeMapPointList.get(0).getLongitude());
 
             regionLayer.add(ltl);
             mMap.addPolygon(regionLayer);
@@ -217,23 +224,6 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
         }
-
-        //Seguimiento.
-        List<DetalleRuta> pointDetalle = myDB.getDetalleRuta(myDB.idRuta());
-
-
-        if (getLoginRequest().getUser().getActiveRoute() != null) {
-            lineSeguimiento = new PolylineOptions();
-            lineSeguimiento.width(6).color(getResources().getColor(R.color.color_9));
-
-            for (int i = 0; i < getLoginRequest().getUser().getActiveRoute().getTrackingDetail().size(); i++) {
-                lineSeguimiento.add(new LatLng(getLoginRequest().getUser().getActiveRoute().getTrackingDetail().get(i).getLatitude(), getLoginRequest().getUser().getActiveRoute().getTrackingDetail().get(i).getLongitude()));
-            }
-        }*/
-
-        //Censo.
-        /*List<Censo> pointCenso = myDB.getCensoRuta(myDB.idRuta());
-        */
 
         rutaChk = (CheckBox)findViewById(R.id.checRuta);
         rutaChk.setOnClickListener(this);
@@ -271,7 +261,7 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
         try {
 
             HashMap<String, Object> postParameters = new HashMap<String, Object>();
-            postParameters.put("userId", myDB.seletUser().getUserId());
+            postParameters.put("userId", myDB.seletUser().getId());
             postParameters.put("routeId", myDB.idRuta());
 
             String jsonParameters = new Gson().toJson(postParameters);
@@ -361,11 +351,109 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
         }
     }
 
+    public void getSeguimientoRuteActive(){
+
+        String url = String.format("%1$s%2$s", "http://181.143.94.74:2080/dito/services/zenso/Authentication.svc/", "Login");
+        requestQueue = Volley.newRequestQueue(this);
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setCiaId("001");
+        loginRequest.setUser(myDB.seletUser().getUserId());
+        loginRequest.setPassword(myDB.seletUser().getPassword());
+
+        try {
+
+            HashMap<String, Object> postParameters = new HashMap<>();
+            postParameters.put("CiaId", loginRequest.getCiaId());
+            postParameters.put("User", loginRequest.getUser());
+            postParameters.put("Password", loginRequest.getPassword());
+
+            String jsonParameters = new Gson().toJson(postParameters);
+            JSONObject jsonRootObject = new JSONObject(jsonParameters);
+
+            JsonObjectRequest jsArrayRequest = new JsonObjectRequest(
+                    Request.Method.POST,
+                    url,
+                    jsonRootObject,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            parseJSONSeguimiento(response);
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            if (error instanceof TimeoutError || error instanceof NoConnectionError) {
+                                Toast.makeText(MapMain.this, "Error de tiempo de espera",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof AuthFailureError) {
+                                Toast.makeText(MapMain.this, "Error Servidor",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof ServerError) {
+                                Toast.makeText(MapMain.this, "Server Error",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof NetworkError) {
+                                Toast.makeText(MapMain.this, "Error de red",Toast.LENGTH_LONG).show();
+                            } else if (error instanceof ParseError) {
+                                Toast.makeText(MapMain.this, "Error al serializar los datos",Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    }){
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    headers.put("Content-Type", "application/json; charset=utf-8");
+                    return headers;
+                }
+            };
+
+            requestQueue.add(jsArrayRequest);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void parseJSONSeguimiento(JSONObject json) {
+        try {
+            Gson gson = new Gson();
+
+            if (json == null || json.equals("")) {
+                Toast.makeText(this, "Problemas al recuperar la información", Toast.LENGTH_SHORT).show();
+            } else {
+                LoginResponse loginResponse = gson.fromJson(String.valueOf(json), LoginResponse.class);
+
+                if(loginResponse.isAuthenticated()){
+                    if (loginResponse.getUser().getActiveRoute().getTrackingDetail().size() > 0) {
+
+                        lineSeguimiento = new PolylineOptions();
+                        lineSeguimiento.width(9).color(getResources().getColor(R.color.color_9));
+
+                        for (int i = 0; i < loginResponse.getUser().getActiveRoute().getTrackingDetail().size(); i++) {
+                            lineSeguimiento.add(new LatLng(loginResponse.getUser().getActiveRoute().getTrackingDetail().get(i).getLatitude(), loginResponse.getUser().getActiveRoute().getTrackingDetail().get(i).getLongitude()));
+                        }
+                    }
+
+                }else{
+                    Toast.makeText(this, "Usuario/Password incorrecto", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        }catch (IllegalStateException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+
     private void onDrawerMenuSelected(int position) {
         switch (position){
             case 1:
                 toolbar.setTitle(getResources().getString(R.string.drawer_inicio));
                 addMapLayout();
+
+                getSeguimientoRuteActive();
+
+                getCensoPoint();
+
                 break;
             case 2:
                 if (!myDB.validarInicioRuta(2)){
@@ -427,7 +515,7 @@ public class MapMain extends AvtivityBase implements GoogleApiClient.ConnectionC
 
         Bundle arguments = new Bundle();
         FragmentManager fragmentManager = getSupportFragmentManager();
-        arguments.putInt("idRuta", myDB.idRuta());
+        arguments.putInt("idRuta", myDB.seletRouteActive().getId());
         fragmentManager.beginTransaction()
                 .replace(R.id.pages, fragCensoData.newInstance(arguments))
                 .commit();

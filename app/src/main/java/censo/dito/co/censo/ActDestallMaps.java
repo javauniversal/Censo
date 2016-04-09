@@ -203,7 +203,7 @@ public class ActDestallMaps extends AvtivityBase implements GoogleApiClient.Conn
         try {
 
             HashMap<String, Object> postParameters = new HashMap<String, Object>();
-            //postParameters.put("userId", getLoginRequest().getUser().getId());
+            postParameters.put("userId", myDB.seletUser().getId());
             postParameters.put("routeId", bundle.getInt("idRuta"));
 
             String jsonParameters = new Gson().toJson(postParameters);
@@ -256,7 +256,7 @@ public class ActDestallMaps extends AvtivityBase implements GoogleApiClient.Conn
             Gson gson = new Gson();
             if (json == null || json.equals("")){
                 Toast.makeText(this, "Problemas al recuperar la información", Toast.LENGTH_SHORT).show();
-            }else {
+            } else {
                 loginResponse = gson.fromJson(String.valueOf(json), ListCensu.class);
                 if (loginResponse.size() > 0) {
                     censoLayer = new ArrayList<>();

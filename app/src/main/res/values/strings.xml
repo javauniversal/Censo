@@ -47,7 +47,7 @@
 
     <string name="query_trace_point_active">CREATE TABLE trace_point_active (id integer primary key AUTOINCREMENT, date_time TEXT, id_route INT, latitude REAL, longitude REAL)</string>
 
-    <string name="query_rutas">CREATE TABLE Ruta (id integer int, nombreRuta TEXT, fechainicial DATETIME, fechafinal DATETIME, estadoruta int)</string>
+    <string name="query_rutas">CREATE TABLE Ruta (id integer int, nombreRuta TEXT, fechainicial DATETIME, fechafinal DATETIME, estadoruta int, StrucDataEntry TEXT)</string>
 
     <string name="query_tracking">CREATE TABLE tracking (id integer primary key AUTOINCREMENT, idRuta INT, latitud REAL, longitud REAL, datetime TEXT)</string>
 
@@ -56,6 +56,8 @@
     <string name="query_seguimiento">CREATE TABLE seguimiento (id integer primary key AUTOINCREMENT, userid INT, ruteid INT, fecha TEXT, latitud double, longitud double)</string>
 
     <string name="query_censodd">CREATE TABLE censobb (id integer primary key AUTOINCREMENT, userid INT, datatime TEXT, latitud double, longitud double, data TEXT, companycode TEXT, routeid INT)</string>
+
+    <string name="query_primeraves">CREATE TABLE introprimeraves (id integer primary key AUTOINCREMENT, userid TEXT)</string>
 
     <!--
     <string name="query_user">CREATE TABLE usuariobd (id integer primary key AUTOINCREMENT, Id INT, UserId TEXT, FullName TEXT, PhotoURL TEXT)</string>

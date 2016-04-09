@@ -45,6 +45,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String sqlMapPonit = context.getString(R.string.query_mapPoint);
         String sqlSeguimiento = context.getString(R.string.query_seguimiento);
         String sqlCensoDb = context.getString(R.string.query_censodd);
+        String sqlintroprimeraves = context.getString(R.string.query_primeraves);
 
         db.execSQL(sql_usuario);
         db.execSQL(sql_rooute_active);
@@ -55,17 +56,12 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(sqlMapPonit);
         db.execSQL(sqlSeguimiento);
         db.execSQL(sqlCensoDb);
-
-
+        db.execSQL(sqlintroprimeraves);
 
         /*String sqlCenso = context.getString(R.string.query_censo);
         String sqlDetallRuta = context.getString(R.string.query_detalleRuta);
 
         String sqlConfiguracion = context.getString(R.string.query_configuracionbase);
-
-
-
-
         db.execSQL(sqlRuta);
         db.execSQL(sqlCenso);
         db.execSQL(sqlDetallRuta);
@@ -89,6 +85,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS MapPoint");
         db.execSQL("DROP TABLE IF EXISTS seguimiento");
         db.execSQL("DROP TABLE IF EXISTS censobb");
+        db.execSQL("DROP TABLE IF EXISTS introprimeraves");
         this.onCreate(db);
 
         /*db.execSQL("DROP TABLE IF EXISTS Ruta");
@@ -101,6 +98,30 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS tracking");
         this.onCreate(db);*/
     }
+
+    public boolean insertIntroPrimeraVes(String data) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        try {
+            values.put("userid", data);
+            db.insert("introprimeraves", null, values);
+            db.close();
+        }catch (SQLiteConstraintException e){
+            Log.d("data", "failure to insert word,", e);
+            return false;
+        }
+        return true;
+    }
+
+    public boolean IntroPrimeraVes(){
+        String sql = "SELECT * FROM introprimeraves";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(sql, null);
+
+        return cursor.moveToFirst();
+    }
+
 
     public boolean insertRouteActive(Route route){
 
@@ -244,7 +265,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return user;
     }
 
-
     //Insert censo formulario.
     public boolean insertCensoFormulario (CensuPointDataRequest data) {
 
@@ -355,6 +375,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 values.put("fechainicial", data.getRoutes().get(i).getStart());
                 values.put("fechafinal", data.getRoutes().get(i).getEnd());
                 values.put("estadoruta", data.getRoutes().get(i).getState());
+                values.put("StrucDataEntry", data.getRoutes().get(i).getStrucDataEntry());
 
                 db.insert("Ruta", null, values);
 
@@ -495,7 +516,7 @@ public class DBHelper extends SQLiteOpenHelper {
     //Recuperamos la lista de rutas.
     public List<Route> getRuta() {
         ArrayList<Route> addRutas = new ArrayList<>();
-        String sql = "SELECT id, nombreRuta, fechainicial, fechafinal, estadoruta FROM Ruta";
+        String sql = "SELECT id, nombreRuta, fechainicial, fechafinal, estadoruta, StrucDataEntry FROM Ruta";
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(sql, null);
 
@@ -508,6 +529,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 ruta.setStart(cursor.getString(2));
                 ruta.setEnd(cursor.getString(3));
                 ruta.setState(Integer.parseInt(cursor.getString(4)));
+                ruta.setStrucDataEntry(cursor.getString(5));
                 addRutas.add(ruta);
             } while(cursor.moveToNext());
         }

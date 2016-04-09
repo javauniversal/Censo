@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
@@ -93,12 +94,14 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
         cd = new ConnectionDetector(getActivity());
         ll = (LinearLayout) getActivity().findViewById(R.id.linearLayout2);
         route = new Route();
-        /*for(int i = 0; i < LoginResponse.getLoginRequest().getRoutes().size(); i++){
-            if(LoginResponse.getLoginRequest().getRoutes().get(i).getState() == 2){
-                route.setStrucDataEntry(LoginResponse.getLoginRequest().getRoutes().get(i).getStrucDataEntry());
+        List<Route> routeList = mydb.getRuta();
+
+        for(int i = 0; i < routeList.size(); i++){
+            if(routeList.get(i).getState() == 2){
+                route.setStrucDataEntry(mydb.getRuta().get(i).getStrucDataEntry());
                 break;
             }
-        }*/
+        }
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -384,15 +387,15 @@ public class FragmentCenso extends Fragment implements View.OnClickListener{
         CensuPointDataRequest censuPointDataRequest = new CensuPointDataRequest();
         TracePoint tracePoint = new TracePoint();
         ServiceLocation serviceLocation = new ServiceLocation(getActivity());
-        //censuPointDataRequest.setUserId(LoginResponse.getLoginRequest().getUser().getId());
-        censuPointDataRequest.setRouteId(1);
+        censuPointDataRequest.setUserId(mydb.seletUser().getId());
+        censuPointDataRequest.setRouteId(mydb.seletRouteActive().getId());
         censuPointDataRequest.setCompanyCode("001");
         censuPointDataRequest.setData(xml);
 
         Date pStart = new Date();
 
         tracePoint.setDateTime("/Date(" + pStart.getTime() + "+0200)/");
-
+        tracePoint.setIdRoute(mydb.seletRouteActive().getId());
         tracePoint.setLatitude(serviceLocation.getLatitude());
         tracePoint.setLongitude(serviceLocation.getLongitude());
 

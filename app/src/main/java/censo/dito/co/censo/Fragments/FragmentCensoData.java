@@ -68,7 +68,7 @@ public class FragmentCensoData extends Fragment {
     private void servicesCensoData(){
 
         HashMap<String, Object> postParameters = new HashMap<String, Object>();
-        //postParameters.put("userId", getLoginRequest().getUser().getId());
+        postParameters.put("userId", mydb.seletUser().getId());
         postParameters.put("routeId", mParam1);
         String jsonParameters = new Gson().toJson(postParameters);
 

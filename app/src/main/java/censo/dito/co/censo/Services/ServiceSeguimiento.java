@@ -2,12 +2,9 @@ package censo.dito.co.censo.Services;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.android.volley.RequestQueue;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -38,39 +35,45 @@ public class ServiceSeguimiento extends Service {
 
         Timer timer = new Timer();
         mydb = new DBHelper(getApplicationContext());
-        timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                List<Seguimiento> seguimientoList = mydb.getCensuSeguimiento();
-                if (seguimientoList.size() > 0) {
-                    for (int i = 0; i < seguimientoList.size(); i++) {
-                        HashMap<String, Object> postParameters = new HashMap<>();
-                        postParameters.put("UserId", seguimientoList.get(i).getUser_id());
-                        postParameters.put("RouteId", seguimientoList.get(i).getRute_id());
+        if (timerTask == null) {
+            timerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    List<Seguimiento> seguimientoList = mydb.getCensuSeguimiento();
+                    if (seguimientoList.size() > 0) {
+                        for (int i = 0; i < seguimientoList.size(); i++) {
+                            HashMap<String, Object> postParameters = new HashMap<>();
+                            postParameters.put("UserId", seguimientoList.get(i).getUser_id());
+                            postParameters.put("RouteId", seguimientoList.get(i).getRute_id());
 
-                        List<Seguimiento> seguimientoListPoint = mydb.getCensuSeguimiento(seguimientoList.get(i).getUser_id(), seguimientoList.get(i).getRute_id());
-                        List<TracePoint> tracePointList = new ArrayList<>();
-                        for (int e = 0; e < seguimientoListPoint.size(); e++) {
-                            TracePoint tracePoint = new TracePoint();
-                            tracePoint.setDateTime(seguimientoListPoint.get(e).getFecha());
-                            tracePoint.setLatitude(seguimientoListPoint.get(e).getLatitud());
-                            tracePoint.setLongitude(seguimientoListPoint.get(e).getLongitud());
-                            tracePointList.add(tracePoint);
+                            List<Seguimiento> seguimientoListPoint = mydb.getCensuSeguimiento(seguimientoList.get(i).getUser_id(), seguimientoList.get(i).getRute_id());
+                            List<TracePoint> tracePointList = new ArrayList<>();
+                            for (int e = 0; e < seguimientoListPoint.size(); e++) {
+                                TracePoint tracePoint = new TracePoint();
+                                tracePoint.setDateTime(seguimientoListPoint.get(e).getFecha());
+                                tracePoint.setIdRoute(seguimientoList.get(i).getRute_id());
+                                tracePoint.setLatitude(seguimientoListPoint.get(e).getLatitud());
+                                tracePoint.setLongitude(seguimientoListPoint.get(e).getLongitud());
+                                tracePointList.add(tracePoint);
+                            }
+
+                            Log.d(TAG, "Encontre en base de datos local: "+seguimientoListPoint.size()+" Registros");
+
+                            postParameters.put("Points", tracePointList);
+                            String jsonParameters = new Gson().toJson(postParameters);
+
+                            saveJsonService(jsonParameters, seguimientoList.get(i).getUser_id(), seguimientoList.get(i).getRute_id());
                         }
-
-                        postParameters.put("Points", tracePointList);
-                        String jsonParameters = new Gson().toJson(postParameters);
-
-                        saveJsonService(jsonParameters, seguimientoList.get(i).getUser_id(), seguimientoList.get(i).getRute_id());
                     }
+
                 }
+            };
+        }
 
-            }
-        };
-
-        timer.scheduleAtFixedRate(timerTask, 0, 300000);
+        timer.scheduleAtFixedRate(timerTask, 0, 180000);
 
         return START_STICKY;
+
     }
 
     private void saveJsonService(String jsonRootObject, int user_id, int rute_id) {
@@ -78,10 +81,12 @@ public class ServiceSeguimiento extends Service {
         ServiceData serviceData = new ServiceData(getApplicationContext(), String.format("%1$s%2$s", getString(R.string.url_administration), "SaveTrace"), jsonRootObject);
         serviceData.PostClick();
         String datt = serviceData.dataServices;
-        if (datt.equals("true")){
-            mydb.deleteSeguimiento(user_id, rute_id);
+        if (datt != null) {
+            if (datt.equals("true")) {
+                mydb.deleteSeguimiento(user_id, rute_id);
+                Log.d(TAG, "Datos borrados de la base de datos local usuario: "+user_id+" ruta: "+rute_id);
+            }
         }
-
     }
 
     @Override
@@ -94,6 +99,5 @@ public class ServiceSeguimiento extends Service {
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
-
 
 }

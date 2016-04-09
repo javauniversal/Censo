@@ -34,6 +34,8 @@ import censo.dito.co.censo.Entity.LoginResponse;
 import censo.dito.co.censo.Entity.Route;
 import censo.dito.co.censo.MapMain;
 import censo.dito.co.censo.R;
+import censo.dito.co.censo.Services.ServiceInsertTracing;
+import censo.dito.co.censo.Services.ServiceSeguimiento;
 
 public class ActLogin extends AvtivityBase implements View.OnClickListener {
 
